@@ -1,0 +1,115 @@
+export type Capability = {
+  id: string;
+  name: string;
+  category: string;
+  progress: number;
+  stageLabel: string;
+  summary: string;
+  evidenceCount: number;
+  updatedAt: string;
+};
+
+export type CaptureSuggestions = {
+  tags: string[];
+  relatedCapabilities: CapabilityMatch[];
+  confidence: 'low' | 'medium' | 'high';
+  nextPrompt: string;
+};
+
+export type CapabilityMatch = {
+  id: string;
+  name: string;
+  reason: string;
+};
+
+export type Note = {
+  id: string;
+  content: string;
+  createdAt: string;
+  relatedCapabilityIds: string[];
+  tags: string[];
+};
+
+export type CoachStep = {
+  id: string;
+  title: string;
+  detail: string;
+  status: 'todo' | 'active' | 'done';
+};
+
+export type CoachPlan = {
+  description: string;
+  steps: CoachStep[];
+};
+
+export type WeeklySummary = {
+  period: string;
+  progress: string[];
+  nextActions: string[];
+};
+
+export type UserProfile = {
+  currentStageLabel: string;
+  weeklyGoal: number;
+  focusArea: string;
+  preferredModel: string;
+  longTermGoal: string;
+  savedNotes: number;
+  lastInsight: string;
+};
+
+export type ModelCallTrace = {
+  id: string;
+  agent: 'Capture Agent' | 'Coach Agent' | 'Reflection Agent' | 'Profile Agent';
+  operation: string;
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+  latencyMs: number;
+  status: 'success' | 'fallback';
+  createdAt: string;
+  promptPreview: string;
+  completionPreview: string;
+};
+
+export type TokenCostSummary = {
+  totalCalls: number;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+};
+
+export type ToolConnector = {
+  id: string;
+  name: string;
+  category: 'llm' | 'mcp' | 'knowledge' | 'workflow' | 'export';
+  method: 'env' | 'mcp' | 'account' | 'local';
+  status: 'not_connected' | 'needs_account' | 'configured' | 'enabled';
+  scope: 'platform' | 'user';
+  description: string;
+  useCases: string[];
+  requiredInputs: string[];
+  envKeys?: string[];
+  mcpEndpoint?: string;
+  accountHint?: string;
+  enabled: boolean;
+  updatedAt?: string;
+};
+
+export type WorkspaceState = {
+  capabilities: Capability[];
+  captureDraft: string;
+  captureSuggestions: CaptureSuggestions;
+  coachPlan: CoachPlan;
+  modelTraces: ModelCallTrace[];
+  notes: Note[];
+  reflectionDraft: string;
+  selectedCapabilityId: string;
+  toolConnectors: ToolConnector[];
+  weeklySummary: WeeklySummary;
+  userProfile: UserProfile;
+  updatedAt?: string;
+};

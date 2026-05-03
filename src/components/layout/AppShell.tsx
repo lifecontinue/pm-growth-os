@@ -1,0 +1,38 @@
+import { ReactNode } from 'react';
+import { useAppStore } from '../../store/app-store';
+
+type AppShellProps = {
+  children: ReactNode;
+};
+
+export function AppShell({ children }: AppShellProps) {
+  const backendError = useAppStore((state) => state.backendError);
+  const isBackendReady = useAppStore((state) => state.isBackendReady);
+  const user = useAppStore((state) => state.userProfile);
+
+  return (
+    <div className="app-shell">
+      <div className="hero-backdrop" />
+      <header className="hero">
+        <div>
+          <p className="eyebrow">AI PM Growth Workspace</p>
+          <h1>PM Growth OS</h1>
+          <p className="hero-copy">
+            把记录、探索、总结和画像更新串成一个可持续运行的 Agent
+            工作流。
+          </p>
+        </div>
+        <div className="hero-summary">
+          <span className="hero-summary-label">当前成长阶段</span>
+          <strong>{user.currentStageLabel}</strong>
+          <span>{user.weeklyGoal} 次 / 周探索目标</span>
+          <span className={isBackendReady ? 'backend-pill backend-ready' : 'backend-pill'}>
+            {isBackendReady ? 'API connected' : 'API offline'}
+          </span>
+        </div>
+      </header>
+      {backendError ? <div className="backend-alert">{backendError}</div> : null}
+      <main className="main-stack">{children}</main>
+    </div>
+  );
+}
