@@ -1,16 +1,25 @@
 import type { ReactNode } from 'react';
 
-export type WorkspaceView = 'growth' | 'notes' | 'reflection' | 'dev' | 'system';
-export type WorkspaceModal = 'capture' | 'connectors' | 'telemetry' | null;
+export type WorkspaceView = 'growth' | 'notes' | 'reflection' | 'system';
+export type WorkspaceModal = 'capture' | 'connectors' | 'skillGraph' | 'telemetry' | null;
+
+type SkillGraphSummary = {
+  activeDimensions: number;
+  overallProgress: number;
+  totalDimensions: number;
+  weakestCapabilityName: string;
+};
 
 type WorkspaceFrameProps = {
   activeModal: WorkspaceModal;
   activeView: WorkspaceView;
   children: ReactNode;
+  devSidebar: ReactNode;
   modalContent: ReactNode;
   onCloseModal: () => void;
   onOpenModal: (modal: Exclude<WorkspaceModal, null>) => void;
   onSelectView: (view: WorkspaceView) => void;
+  skillGraphSummary: SkillGraphSummary;
 };
 
 const navItems: Array<{ id: WorkspaceView; label: string; description: string; icon: string }> = [
@@ -22,8 +31,8 @@ const navItems: Array<{ id: WorkspaceView; label: string; description: string; i
   },
   {
     id: 'notes',
-    label: 'Notes Library',
-    description: 'History and search',
+    label: 'Evidence Library',
+    description: 'Saved evidence and search',
     icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8',
   },
   {
@@ -32,28 +41,18 @@ const navItems: Array<{ id: WorkspaceView; label: string; description: string; i
     description: 'Generate and export',
     icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L12 17l-7-9',
   },
-  {
-    id: 'dev',
-    label: 'Dev Board',
-    description: 'Tokens and traces',
-    icon: 'M4 7h16M4 12h10M4 17h7M17 14l3 3-3 3',
-  },
-  {
-    id: 'system',
-    label: 'System',
-    description: 'Tools and cost',
-    icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
-  },
 ];
 
 export function WorkspaceFrame({
   activeModal,
   activeView,
   children,
+  devSidebar,
   modalContent,
   onCloseModal,
   onOpenModal,
   onSelectView,
+  skillGraphSummary,
 }: WorkspaceFrameProps) {
   return (
     <div className="workspace-frame">
@@ -90,24 +89,44 @@ export function WorkspaceFrame({
             </button>
           ))}
         </nav>
+        <button
+          aria-label="Open the full Growth Map"
+          className="skill-graph-mini"
+          onClick={() => onOpenModal('skillGraph')}
+          type="button"
+        >
+          <div className="section-inline-header">
+            <span className="snapshot-label">Growth Map</span>
+            <strong>{skillGraphSummary.overallProgress}%</strong>
+          </div>
+          <div className="mini-progress-bar">
+            <span style={{ width: `${skillGraphSummary.overallProgress}%` }} />
+          </div>
+          <p>
+            {skillGraphSummary.activeDimensions}/{skillGraphSummary.totalDimensions} dimensions
+            active
+          </p>
+          <small>Open full map and start a task</small>
+        </button>
         <div className="sidebar-actions">
-          <button className="solid-button" onClick={() => onOpenModal('capture')}>
-            New Note
-          </button>
-          <button className="ghost-button" onClick={() => onOpenModal('connectors')}>
-            Connect Tools
-          </button>
-          <button className="ghost-button" onClick={() => onOpenModal('telemetry')}>
-            Cost Monitor
+          <button
+            className="solid-button sidebar-create-button"
+            onClick={() => onOpenModal('capture')}
+          >
+            <span className="create-plus">+</span>
+            New Evidence
           </button>
         </div>
       </aside>
       <section className="workspace-content">{children}</section>
+      <aside className="developer-sidebar" aria-label="Workspace context and developer tools">
+        {devSidebar}
+      </aside>
       {activeModal ? (
         <div className="modal-backdrop" role="presentation" onClick={onCloseModal}>
           <div
             aria-modal="true"
-            className="modal-panel"
+            className={`modal-panel ${getModalPanelClassName(activeModal)}`}
             role="dialog"
             onClick={(event) => event.stopPropagation()}
           >
@@ -141,10 +160,17 @@ export function WorkspaceFrame({
   );
 }
 
+function getModalPanelClassName(modal: Exclude<WorkspaceModal, null>) {
+  if (modal === 'skillGraph') return 'modal-panel-wide';
+  if (modal === 'capture') return 'modal-panel-capture';
+  return '';
+}
+
 function getModalTitle(modal: Exclude<WorkspaceModal, null>) {
   const titles = {
-    capture: 'New Note',
+    capture: 'New Evidence',
     connectors: 'Tool Connectors',
+    skillGraph: 'Growth Map',
     telemetry: 'Cost Monitor',
   };
 

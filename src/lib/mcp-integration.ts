@@ -36,7 +36,7 @@ export const MCP_TOOL_REGISTRY: MCPToolDefinition[] = [
   {
     id: 'notion',
     name: 'Notion',
-    description: 'Optional future sync target for notes, weekly reviews, and learning evidence.',
+    description: 'Optional future sync target for evidence, weekly reviews, and learning artifacts.',
     category: 'storage',
     capabilities: ['export'],
     status: 'needs_config',
@@ -71,31 +71,15 @@ export async function searchLearningResources(
   capabilityId: string,
   options: SearchOptions = {},
 ): Promise<LearningResource[]> {
-  const limit = options.limit ?? 8;
+  const limit = options.limit ?? 12;
   const keywords = getResourceSearchKeywords(capabilityId);
-  const response = await fetch('/api/knowledge-search', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      capabilityId,
-      focusArea: options.focusArea,
-      limit,
-      queries: buildSearchQueries(capabilityId, keywords, options),
-    }),
+
+  return postKnowledgeSearch({
+    capabilityId,
+    focusArea: options.focusArea,
+    limit,
+    queries: buildSearchQueries(capabilityId, keywords, options),
   });
-
-  if (!response.ok) {
-    const payload = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(
-      payload?.message ??
-        `Real web search failed with status ${response.status}. Check platform search configuration.`,
-    );
-  }
-
-  const payload = (await response.json()) as { resources?: LearningResource[] };
-  return (payload.resources ?? []).slice(0, limit);
 }
 
 export function formatResourcesAsMarkdown(resources: LearningResource[]): string {
@@ -132,6 +116,14 @@ export interface ToolStatus {
   config?: Record<string, unknown>;
 }
 
+export interface KnowledgeSearchDiagnostic {
+  ok: boolean;
+  configured: boolean;
+  provider: string | null;
+  endpoint?: string;
+  message: string;
+}
+
 export function getToolStatus(): ToolStatus[] {
   return MCP_TOOL_REGISTRY.map((tool) => ({
     id: tool.id,
@@ -152,6 +144,85 @@ export function formatToolsForUI(tools: MCPToolDefinition[]) {
   }));
 }
 
+export async function checkKnowledgeSearchConnection(): Promise<KnowledgeSearchDiagnostic> {
+  const endpoints = getKnowledgeSearchEndpoints();
+  let lastFailure: KnowledgeSearchFailure | null = null;
+  let firstReachableUnconfigured:
+    | {
+        endpoint: string;
+        provider: string | null;
+      }
+    | null = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint);
+      const payload = (await response.json().catch(() => null)) as {
+        configured?: boolean;
+        provider?: string | null;
+        message?: string;
+      } | null;
+
+      if (!response.ok) {
+        lastFailure = {
+          endpoint,
+          status: response.status,
+          message: payload?.message,
+        };
+
+        if (response.status === 404 || response.status >= 500) {
+          continue;
+        }
+
+        break;
+      }
+
+      const configured = Boolean(payload?.configured);
+      const provider = payload?.provider ?? null;
+
+      if (configured) {
+        return {
+          ok: true,
+          configured,
+          provider,
+          endpoint,
+          message: `Knowledge Search is connected through ${provider ?? 'the platform provider'}.`,
+        };
+      }
+
+      firstReachableUnconfigured ??= {
+        endpoint,
+        provider,
+      };
+    } catch (error) {
+      lastFailure = {
+        endpoint,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  if (firstReachableUnconfigured) {
+    return {
+      ok: true,
+      configured: false,
+      provider: firstReachableUnconfigured.provider,
+      endpoint: firstReachableUnconfigured.endpoint,
+      message:
+        `Knowledge Search API is reachable at ${firstReachableUnconfigured.endpoint}, but no provider key is configured there. ` +
+        'Set TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or SERPAPI_API_KEY for that runtime.',
+    };
+  }
+
+  return {
+    ok: false,
+    configured: false,
+    provider: null,
+    endpoint: lastFailure?.endpoint,
+    message: formatKnowledgeSearchError(lastFailure),
+  };
+}
+
 function buildSearchQueries(
   capabilityId: string,
   keywords: string[],
@@ -168,6 +239,126 @@ function buildSearchQueries(
     `${primaryKeyword} research paper LLM AI workflow`,
     `${primaryKeyword} open source tool example`,
   ];
+}
+
+type KnowledgeSearchRequest = {
+  capabilityId: string;
+  focusArea?: string;
+  limit: number;
+  queries: string[];
+};
+
+async function postKnowledgeSearch(requestBody: KnowledgeSearchRequest): Promise<LearningResource[]> {
+  const endpoints = getKnowledgeSearchEndpoints();
+  const body = JSON.stringify(requestBody);
+  let lastFailure: KnowledgeSearchFailure | null = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+        lastFailure = {
+          endpoint,
+          status: response.status,
+          message: payload?.message,
+        };
+
+        if (response.status === 404 || response.status >= 500) {
+          continue;
+        }
+
+        break;
+      }
+
+      const payload = (await response.json()) as { resources?: LearningResource[] };
+      return (payload.resources ?? []).slice(0, requestBody.limit);
+    } catch (error) {
+      lastFailure = {
+        endpoint,
+        message: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  throw new Error(formatKnowledgeSearchError(lastFailure));
+}
+
+type KnowledgeSearchFailure = {
+  endpoint: string;
+  status?: number;
+  message?: string;
+};
+
+function getKnowledgeSearchEndpoints(): string[] {
+  const endpoints = new Set<string>();
+  const configuredBaseUrl = getViteEnv('VITE_API_URL')?.replace(/\/$/, '');
+
+  if (isLocalBrowser()) {
+    endpoints.add('http://127.0.0.1:8787/api/knowledge-search');
+    endpoints.add('http://localhost:8787/api/knowledge-search');
+  }
+
+  if (configuredBaseUrl) {
+    endpoints.add(`${configuredBaseUrl}/api/knowledge-search`);
+  }
+
+  endpoints.add('/api/knowledge-search');
+
+  return [...endpoints];
+}
+
+function getViteEnv(key: string): string | undefined {
+  return (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[key];
+}
+
+function isLocalBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  return ['localhost', '127.0.0.1'].includes(window.location.hostname);
+}
+
+function formatKnowledgeSearchError(failure: KnowledgeSearchFailure | null): string {
+  if (!failure) {
+    return 'Knowledge Search API is unavailable. Configure the platform search API before generating live resources.';
+  }
+
+  if (failure.message && !isFetchNetworkError(failure.message)) {
+    return failure.message;
+  }
+
+  if (isFetchNetworkError(failure.message)) {
+    return [
+      'Knowledge Search API is unreachable.',
+      'For local development, run npm run dev:api alongside npm run dev.',
+      'For production, deploy the Vercel API route and configure a search provider key.',
+    ].join(' ');
+  }
+
+  if (failure.status === 404) {
+    return [
+      'Knowledge Search API was not found.',
+      'For local development, run npm run dev:api alongside npm run dev.',
+      'For production, deploy the Vercel API route and configure a search provider key.',
+    ].join(' ');
+  }
+
+  if (failure.status === 503) {
+    return 'Real web search is not configured. Set TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or SERPAPI_API_KEY in the platform environment.';
+  }
+
+  return `Knowledge Search API failed${failure.status ? ` with status ${failure.status}` : ''}. Check platform search configuration.`;
+}
+
+function isFetchNetworkError(message?: string) {
+  return Boolean(message && /failed to fetch|networkerror|load failed/i.test(message));
 }
 
 function getStatusBadge(status: MCPToolDefinition['status']): string {
@@ -193,6 +384,7 @@ export default {
   searchLearningResources,
   formatResourcesAsMarkdown,
   formatResourcesAsCards,
+  checkKnowledgeSearchConnection,
   getToolStatus,
   formatToolsForUI,
 };

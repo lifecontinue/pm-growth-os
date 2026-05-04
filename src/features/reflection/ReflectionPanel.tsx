@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { SectionCard } from '../../components/ui/SectionCard';
+import { notify } from '../../lib/notifications';
 import { useAppStore } from '../../store/app-store';
 import type { WeeklySummary } from '../../types/domain';
 
@@ -18,12 +19,13 @@ export function ReflectionPanel() {
       title="Reflection Agent"
       subtitle="Periodic review"
       actionLabel="Generate Review"
+      actionVariant="primary"
       onAction={generateReflectionDraft}
     >
       <div className="stack-sm">
         <div className="section-inline-header">
           <p className="panel-intro">{weeklySummary.period}</p>
-          <span className="muted-text">{notes.length} notes available</span>
+          <span className="muted-text">{notes.length} evidence records available</span>
         </div>
         <div className="summary-block">
           <strong>Progress This Week</strong>
@@ -77,7 +79,10 @@ export function ReflectionPanel() {
           <button
             className="ghost-button"
             disabled={!draft.trim()}
-            onClick={() => updateReflectionDraft(buildFallbackDraft(weeklySummary))}
+            onClick={() => {
+              updateReflectionDraft(buildFallbackDraft(weeklySummary));
+              notify('Review template restored.', 'success');
+            }}
           >
             Restore Template
           </button>
@@ -176,4 +181,5 @@ function downloadMarkdown(markdown: string) {
   link.download = `pm-growth-weekly-${new Date().toISOString().slice(0, 10)}.md`;
   link.click();
   URL.revokeObjectURL(url);
+  notify('Weekly review exported as Markdown.', 'success');
 }

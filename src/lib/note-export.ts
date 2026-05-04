@@ -6,14 +6,14 @@ export function exportNotesToMarkdown(notes: Note[], capabilities: Capability[])
   );
 
   if (notes.length === 0) {
-    return '# PM Growth OS Notes Export\n\nNo notes yet.\n';
+    return '# PM Growth OS Evidence Export\n\nNo evidence records yet.\n';
   }
 
   return [
-    '# PM Growth OS Notes Export',
+    '# PM Growth OS Evidence Export',
     '',
     `Exported at: ${new Date().toLocaleString('en-US')}`,
-    `Total notes: ${notes.length}`,
+    `Total evidence records: ${notes.length}`,
     '',
     ...notes.flatMap((note, index) => [
       `## ${index + 1}. ${new Date(note.createdAt).toLocaleString('en-US')}`,

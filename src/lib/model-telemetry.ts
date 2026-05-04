@@ -1,4 +1,4 @@
-import type { ModelCallTrace, TokenCostSummary } from '../types/domain';
+import type { ModelCallTrace, TokenCostSummary, UsageLog } from '../types/domain';
 
 type TraceInput = {
   agent: ModelCallTrace['agent'];
@@ -67,6 +67,23 @@ export function summarizeModelCalls(traces: ModelCallTrace[]): TokenCostSummary 
       estimatedCostUsd: 0,
     },
   );
+}
+
+export function createUsageLogFromTrace(
+  trace: ModelCallTrace,
+  userId = 'local-user',
+): UsageLog {
+  return {
+    id: trace.id,
+    user_id: userId,
+    feature: trace.operation,
+    model: trace.model,
+    prompt_tokens: trace.promptTokens,
+    completion_tokens: trace.completionTokens,
+    cost: trace.estimatedCostUsd,
+    latency: trace.latencyMs,
+    created_at: trace.createdAt,
+  };
 }
 
 export function formatUsd(value: number) {

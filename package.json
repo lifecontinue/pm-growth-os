@@ -4,11 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --config configs/vite.config.ts",
     "dev:api": "node server/index.mjs",
-    "build": "tsc && vite build",
-    "build:prod": "tsc && vite build",
-    "preview": "vite preview"
+    "bridge:usage": "node scripts/vscode-usage-bridge.mjs",
+    "build": "tsc -p configs/tsconfig.json && vite build --config configs/vite.config.ts",
+    "build:prod": "tsc -p configs/tsconfig.json && vite build --config configs/vite.config.ts",
+    "preview": "vite preview --config configs/vite.config.ts",
+    "test": "node tests/smoke.mjs",
+    "test:smoke": "node tests/smoke.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",

@@ -65,9 +65,34 @@ export type LearningGuide = {
   learningPath: string[];
   resources: LearningResource[];
   practiceTask: string;
+  practiceTasks?: LearningPracticeTask[];
   reflectionPrompt: string;
   captureTemplate: string;
   nextStep: string;
+  review?: LearningReview;
+};
+
+export type LearningPracticeTask = {
+  id: string;
+  title: string;
+  objective: string;
+  tool: string;
+  artifact: string;
+  steps: string[];
+  output: string;
+  doneWhen: string;
+  estimatedMinutes: number;
+};
+
+export type LearningReview = {
+  score: number;
+  verdict: 'ready' | 'needs_improvement';
+  checks: Array<{
+    label: string;
+    passed: boolean;
+    note: string;
+  }>;
+  recommendations: string[];
 };
 
 export type CoachPlan = {
@@ -95,11 +120,13 @@ export type UserProfile = {
 export type ModelCallTrace = {
   id: string;
   agent:
-    | 'Capture Agent'
+    | 'Evidence Capture'
     | 'Coach Agent'
     | 'Knowledge Tool'
+    | 'Learning Review Agent'
     | 'Reflection Agent'
-    | 'Profile Agent';
+    | 'Profile Agent'
+    | 'Dev Gateway';
   operation: string;
   model: string;
   promptTokens: number;
@@ -121,10 +148,22 @@ export type TokenCostSummary = {
   estimatedCostUsd: number;
 };
 
+export type UsageLog = {
+  id: string;
+  user_id: string;
+  feature: string;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  cost: number;
+  latency: number;
+  created_at: string;
+};
+
 export type ToolConnector = {
   id: string;
   name: string;
-  category: 'llm' | 'mcp' | 'knowledge' | 'workflow' | 'export';
+  category: 'llm' | 'mcp' | 'knowledge' | 'workflow' | 'export' | 'database';
   method: 'env' | 'mcp' | 'account' | 'local';
   status: 'not_connected' | 'needs_account' | 'configured' | 'enabled';
   scope: 'platform' | 'user';
@@ -148,6 +187,7 @@ export type WorkspaceState = {
   reflectionDraft: string;
   selectedCapabilityId: string;
   toolConnectors: ToolConnector[];
+  usageLogs: UsageLog[];
   weeklySummary: WeeklySummary;
   userProfile: UserProfile;
   updatedAt?: string;

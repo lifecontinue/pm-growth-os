@@ -9,6 +9,12 @@ import {
 } from './lib/domain.mjs';
 import { getKnowledgeSearchStatus, searchKnowledgeResources } from './lib/knowledge-search.mjs';
 import { readWorkspace, resetWorkspace, updateWorkspace, writeWorkspace } from './lib/store.mjs';
+import {
+  isUsageBridgeAuthorized,
+  mergeUsageLogs,
+  normalizeUsageLogPayload,
+} from './lib/usage-log-bridge.mjs';
+import { getLangfuseStatus, sendUsageLogToLangfuse } from './lib/langfuse-bridge.mjs';
 
 const port = Number(process.env.PORT ?? 8787);
 
@@ -53,12 +59,59 @@ async function route(request, response) {
 
   if (method === 'POST' && url.pathname === '/api/knowledge-search') {
     const body = await readJson(request);
-    sendJson(response, 200, { resources: await searchKnowledgeResources(body) });
+    try {
+      sendJson(response, 200, { resources: await searchKnowledgeResources(body) });
+    } catch (error) {
+      sendJson(response, Number(error?.statusCode ?? 500), {
+        error: 'Knowledge search failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
     return;
   }
 
   if (method === 'GET' && url.pathname === '/api/workspace') {
     sendJson(response, 200, await readWorkspace());
+    return;
+  }
+
+  if (method === 'GET' && url.pathname === '/api/usage-logs') {
+    const workspace = await readWorkspace();
+    sendJson(response, 200, {
+      observability: {
+        langfuse: getLangfuseStatus(),
+      },
+      usageLogs: workspace.usageLogs ?? [],
+    });
+    return;
+  }
+
+  if (method === 'POST' && url.pathname === '/api/usage-logs') {
+    if (!isUsageBridgeAuthorized(request)) {
+      sendJson(response, 401, { error: 'Unauthorized usage bridge request.' });
+      return;
+    }
+
+    const body = await readJson(request);
+    const log = normalizeUsageLogPayload(body);
+    const langfuse = await sendUsageLogToLangfuse(log).catch((error) => ({
+      configured: getLangfuseStatus().configured,
+      message: error instanceof Error ? error.message : String(error),
+      provider: 'langfuse',
+      status: 'failed',
+    }));
+    const workspace = await updateWorkspace((current) => ({
+      ...current,
+      usageLogs: mergeUsageLogs(current.usageLogs ?? [], [log]),
+    }));
+
+    sendJson(response, 201, {
+      observability: {
+        langfuse,
+      },
+      usageLog: log,
+      usageLogs: workspace.usageLogs,
+    });
     return;
   }
 
@@ -137,7 +190,7 @@ async function route(request, response) {
       const suggestions = inferCaptureSuggestions(content, current.capabilities);
       const now = new Date().toISOString();
       const trace = createModelCallTrace({
-        agent: 'Capture Agent',
+        agent: 'Evidence Capture',
         operation: 'infer_capture_suggestions',
         prompt: content,
         completion: JSON.stringify(suggestions),
@@ -257,7 +310,13 @@ async function route(request, response) {
       const step = current.coachPlan.steps.find((item) => item.id === stepId);
       if (!step) return current;
 
-      const nextDraft = `探索任务：${step.title}\n\n${step.detail}\n\n我的实践记录：`;
+      const nextDraft = [
+        `Practice task: ${step.title}`,
+        '',
+        step.detail,
+        '',
+        'My evidence record:',
+      ].join('\n');
       const trace = createModelCallTrace({
         agent: 'Coach Agent',
         operation: 'handoff_step_to_capture',
@@ -290,14 +349,14 @@ async function route(request, response) {
       if (!capability) return current;
 
       const nextDraft = [
-        `能力探索：${capability.name}`,
+        `Capability exploration: ${capability.name}`,
         '',
-        `当前阶段：${capability.stageLabel}`,
-        `当前进度：${capability.progress}%`,
+        `Current stage: ${capability.stageLabel}`,
+        `Current progress: ${capability.progress}%`,
         '',
-        '我今天遇到的真实场景：',
+        'Real scenario I encountered today:',
         '',
-        '我想验证的问题：',
+        'Question I want to validate:',
       ].join('\n');
       const trace = createModelCallTrace({
         agent: 'Profile Agent',

@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { SectionCard } from '../../components/ui/SectionCard';
 import { useAppStore } from '../../store/app-store';
 
 export function CapturePanel() {
+  const [isAdjustingCapabilities, setIsAdjustingCapabilities] = useState(false);
   const capabilities = useAppStore((state) => state.capabilities);
   const draft = useAppStore((state) => state.captureDraft);
   const suggestions = useAppStore((state) => state.captureSuggestions);
@@ -14,10 +16,11 @@ export function CapturePanel() {
 
   return (
     <SectionCard
-      title="Capture Agent"
-      subtitle="Work journal"
-      actionLabel="Save Note"
+      title="Evidence Capture"
+      subtitle="Work evidence"
+      actionLabel="Save Evidence"
       actionDisabled={!draft.trim()}
+      actionVariant="primary"
       onAction={saveCaptureNote}
     >
       <div className="capture-container">
@@ -33,7 +36,7 @@ export function CapturePanel() {
             >
               <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm1-13h-2v6l5.25 3.15.75-1.23-4-2.42z" />
             </svg>
-            <span>Capture real thoughts, problems, or observations from AI product work.</span>
+            <span>Record real thoughts, problems, or observations from AI product work.</span>
           </div>
         </div>
         <textarea
@@ -42,50 +45,54 @@ export function CapturePanel() {
           placeholder="Today I noticed context loss while debugging an agent workflow..."
           onChange={(event) => updateCaptureDraft(event.target.value)}
         />
-        {draft.trim() && (
-          <div className="capability-detected">
+        {draft.trim() ? (
+          <div className="capability-detected capability-detected-compact">
             <div className="detected-header">
-              <span className="detected-label">Related capabilities detected</span>
+              <div>
+                <span className="detected-label">Related capabilities</span>
+                <p className="detected-summary">
+                  {suggestions.relatedCapabilities.length > 0
+                    ? suggestions.relatedCapabilities.map((cap) => cap.name).join(', ')
+                    : 'No capability selected yet.'}
+                </p>
+              </div>
               <span className={`confidence-pill confidence-${suggestions.confidence}`}>
                 {suggestions.confidence}
               </span>
             </div>
-            {suggestions.relatedCapabilities.length > 0 ? (
-              <div className="detected-caps">
-                {suggestions.relatedCapabilities.map((cap) => (
-                  <span key={cap.id} className="detected-cap">
-                    <span className="cap-name">{cap.name}</span>
-                    <span className="cap-reason">{cap.reason}</span>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="muted-text">
-                No capability link selected yet. Choose one or more dimensions below.
-              </p>
-            )}
-            <label className="field-label" htmlFor="capture-capability-links">
-              Adjust related capabilities
-            </label>
-            <select
-              className="library-select multi-select"
-              id="capture-capability-links"
-              multiple
-              value={selectedCapabilityIds}
-              onChange={(event) =>
-                updateCaptureCapabilityLinks(
-                  Array.from(event.target.selectedOptions, (option) => option.value),
-                )
-              }
+            <button
+              className="text-button capture-adjust-toggle"
+              onClick={() => setIsAdjustingCapabilities((current) => !current)}
+              type="button"
             >
-              {capabilities.map((capability) => (
-                <option key={capability.id} value={capability.id}>
-                  {capability.name}
-                </option>
-              ))}
-            </select>
+              {isAdjustingCapabilities ? 'Hide capability options' : 'Adjust related capabilities'}
+            </button>
+            {isAdjustingCapabilities ? (
+              <div className="capture-capability-options" aria-label="Adjust related capabilities">
+                {capabilities.map((capability) => {
+                  const isSelected = selectedCapabilityIds.includes(capability.id);
+
+                  return (
+                    <button
+                      className={`capability-option-chip ${isSelected ? 'capability-option-chip-active' : ''}`}
+                      key={capability.id}
+                      onClick={() => {
+                        const nextIds = isSelected
+                          ? selectedCapabilityIds.filter((id) => id !== capability.id)
+                          : [...selectedCapabilityIds, capability.id];
+
+                        updateCaptureCapabilityLinks(nextIds);
+                      }}
+                      type="button"
+                    >
+                      {capability.name}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
-        )}
+        ) : null}
         {suggestions.nextPrompt && (
           <div className="ai-suggestion">
             <div className="suggestion-icon">

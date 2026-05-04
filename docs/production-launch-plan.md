@@ -39,7 +39,7 @@ Start with these tables:
 | `profiles` | User settings, stage, preferred model, weekly goal. |
 | `capabilities` | Canonical AI PM skill graph. |
 | `user_capabilities` | Per-user progress, stage, evidence count. |
-| `notes` | Saved Capture Agent records. |
+| `notes` | Saved Evidence Capture records. |
 | `note_capabilities` | Many-to-many note to capability links. |
 | `coach_plans` | Generated exploration plans and step status. |
 | `reflection_drafts` | Weekly/monthly generated summaries. |
@@ -84,7 +84,7 @@ Initial route mapping:
 
 | Agent | Default provider | Fallback |
 | --- | --- | --- |
-| Capture Agent | OpenAI small model | Local rule classifier |
+| Evidence Capture | OpenAI small model | Local rule classifier |
 | Coach Agent | OpenAI or Claude | Template generator |
 | Reflection Agent | Claude/OpenAI long-context | Template generator |
 | Evaluation | OpenAI judge model | Manual score |
@@ -108,7 +108,7 @@ Initial route mapping:
 
 - Vercel deployment.
 - Supabase Auth.
-- Supabase persistence for profiles, notes, capabilities, traces.
+- Supabase persistence for profiles, evidence records, capabilities, traces.
 - Existing UI works for multiple users.
 - Server-side local Agent fallback remains available.
 
@@ -116,7 +116,7 @@ Initial route mapping:
 
 - OpenAI provider adapter.
 - Real usage tokens stored in `model_traces`.
-- Capture/Coach/Reflection use real models when configured.
+- Evidence Capture/Coach/Reflection use real models when configured.
 - Cost Monitor switches from estimated usage to provider usage when available.
 
 ### Milestone 3: Collaboration-Ready
@@ -141,7 +141,7 @@ Initial route mapping:
 4. Add server-side LLM provider adapter.
 5. Add deployment config and Vercel env setup guide.
 6. Add seed script for capability graph.
-7. Add e2e smoke test for signup -> note -> reflection -> cost trace.
+7. Add e2e smoke test for signup -> evidence -> reflection -> cost trace.
 
 ## Accounts And Credentials Needed
 
@@ -157,9 +157,9 @@ You should prepare:
 
 ## Production Acceptance Criteria
 
-- A new user can sign up, save notes, see only their own data, and generate a weekly summary.
+- A new user can sign up, save evidence, see only their own data, and generate a weekly summary.
 - LLM keys are never exposed to the browser.
 - Every real model call records provider, model, token usage, cost, latency, status, and operation.
-- Deleting a note updates capability progress and evidence counts.
+- Deleting an evidence record updates capability progress and evidence counts.
 - App can be deployed from a clean clone using documented env variables.
 - Basic errors are visible in UI and server logs.

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SectionCard } from '../../components/ui/SectionCard';
+import { notify } from '../../lib/notifications';
 import { useAppStore } from '../../store/app-store';
 import type { Note } from '../../types/domain';
 
@@ -22,7 +23,7 @@ export function NotesLibraryPanel() {
 
   return (
     <SectionCard
-      title="Notes Library"
+      title="Evidence Library"
       subtitle="Search and reuse"
       actionLabel="Export Markdown"
       actionDisabled={notes.length === 0}
@@ -52,7 +53,7 @@ export function NotesLibraryPanel() {
         <div className="section-inline-header">
           <strong>Search Results</strong>
           <span className="muted-text">
-            {filteredNotes.length}/{notes.length} notes
+            {filteredNotes.length}/{notes.length} evidence records
           </span>
         </div>
         {filteredNotes.length > 0 ? (
@@ -78,7 +79,7 @@ export function NotesLibraryPanel() {
                 </div>
                 <div className="library-actions">
                   <button className="text-button" onClick={() => sendNoteToCapture(note.id)}>
-                    Reuse as Draft
+                    Use as Evidence Draft
                   </button>
                   <button className="text-button danger-text" onClick={() => deleteNote(note.id)}>
                     Delete
@@ -89,7 +90,7 @@ export function NotesLibraryPanel() {
           </div>
         ) : (
           <p className="muted-text">
-            No matching notes yet. Save a Capture note and it will appear here.
+            No matching evidence yet. Save evidence and it will appear here.
           </p>
         )}
       </div>
@@ -116,7 +117,8 @@ function downloadMarkdown(markdown: string) {
   const link = document.createElement('a');
 
   link.href = url;
-  link.download = `pm-growth-notes-${new Date().toISOString().slice(0, 10)}.md`;
+  link.download = `pm-growth-evidence-${new Date().toISOString().slice(0, 10)}.md`;
   link.click();
   URL.revokeObjectURL(url);
+  notify('Evidence exported as Markdown.', 'success');
 }

@@ -47,18 +47,28 @@ function normalizeWorkspace(workspace) {
   return {
     ...initial,
     ...workspace,
-    capabilities: workspace.capabilities ?? initial.capabilities,
+    capabilities: mergeCapabilities(workspace.capabilities, initial.capabilities),
     captureSuggestions: workspace.captureSuggestions ?? initial.captureSuggestions,
     coachPlan: workspace.coachPlan ?? initial.coachPlan,
     modelTraces: workspace.modelTraces ?? [],
     notes: workspace.notes ?? [],
     toolConnectors: mergeToolConnectors(workspace.toolConnectors, initial.toolConnectors),
+    usageLogs: workspace.usageLogs ?? [],
     weeklySummary: workspace.weeklySummary ?? initial.weeklySummary,
     userProfile: {
       ...initial.userProfile,
       ...(workspace.userProfile ?? {}),
     },
   };
+}
+
+function mergeCapabilities(existing = [], latest = []) {
+  const existingById = new Map(existing.map((capability) => [capability.id, capability]));
+
+  return latest.map((capability) => ({
+    ...capability,
+    ...(existingById.get(capability.id) ?? {}),
+  }));
 }
 
 function mergeToolConnectors(existing = [], latest = []) {

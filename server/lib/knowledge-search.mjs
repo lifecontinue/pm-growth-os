@@ -1,3 +1,7 @@
+import { loadLocalEnv } from './env-loader.mjs';
+
+loadLocalEnv();
+
 const providerOrder = ['tavily', 'brave', 'serpapi'];
 
 export async function searchKnowledgeResources(payload = {}) {
@@ -278,7 +282,7 @@ function normalizeLimit(limit) {
   const parsed = Number(limit);
 
   if (!Number.isFinite(parsed)) {
-    return 8;
+    return 12;
   }
 
   return Math.min(12, Math.max(1, Math.round(parsed)));
@@ -287,9 +291,18 @@ function normalizeLimit(limit) {
 function readableCapability(capabilityId) {
   const map = {
     'prompt-engineering': 'prompt engineering',
+    'ai-product-strategy': 'AI product strategy',
+    'user-research-synthesis': 'user research synthesis',
     'context-engineering': 'context engineering',
+    'rag-knowledge-systems': 'RAG knowledge systems',
     'agent-design': 'agent design',
+    'tool-orchestration': 'tool orchestration',
     'ai-evaluation': 'AI evaluation',
+    'experimentation-metrics': 'AI product experimentation metrics',
+    'ai-safety-governance': 'AI safety governance',
+    'automation-ops': 'AI workflow automation operations',
+    'product-storytelling': 'AI product storytelling',
+    'multi-agent-collaboration': 'multi-agent collaboration',
   };
 
   return map[capabilityId] ?? capabilityId.replace(/-/g, ' ');

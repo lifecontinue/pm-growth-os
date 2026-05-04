@@ -2,7 +2,7 @@
 
 ## Principle
 
-PM Growth OS should launch with platform-managed basics. End users should be able to sign up and use Capture, Coach, Reflection, Notes, exports, and cost monitoring without bringing their own API keys.
+PM Growth OS should launch with platform-managed basics. End users should be able to sign up and use Evidence Capture, Coach, Reflection, Evidence Library, exports, and cost monitoring without bringing their own API keys.
 
 ## Baseline Accounts
 
@@ -46,7 +46,7 @@ After platform setup:
 
 1. User opens the hosted app.
 2. User signs up or logs in.
-3. User creates notes and gets AI suggestions without configuring any model key.
+3. User creates evidence records and gets AI suggestions without configuring any model key.
 4. User generates Coach plans and Reflection summaries.
 5. Cost Monitor records token usage under the platform model provider.
 6. Optional connectors show as add-ons, not blockers.
@@ -70,4 +70,3 @@ After platform setup:
 5. Add server-side OpenAI provider adapter.
 6. Store real provider token usage in `model_traces`.
 7. Add onboarding copy that says AI is included by the platform.
-

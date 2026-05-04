@@ -33,13 +33,13 @@ export function generateCoachPlan({
       {
         id: 'run-micro-practice',
         title: 'Step 2: Run a micro-practice',
-        detail: `Design a 20-minute exercise based on ${recentTopic}. Capture the input, output, and judgment criteria.`,
+        detail: `Design a 20-minute exercise based on ${recentTopic}. Record the input, output, and judgment criteria.`,
         status: 'todo',
       },
       {
         id: 'capture-evidence',
-        title: 'Step 3: Capture capability evidence',
-        detail: `Turn the practice result into a note, link it to ${targetCapability.name}, and explain how it changed your judgment.`,
+        title: 'Step 3: Save capability evidence',
+        detail: `Turn the practice result into an evidence record, link it to ${targetCapability.name}, and explain how it changed your judgment.`,
         status: 'todo',
       },
     ],

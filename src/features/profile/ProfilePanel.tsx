@@ -11,6 +11,7 @@ export function ProfilePanel() {
       title="Profile Agent"
       subtitle="Growth profile"
       actionLabel="Reset"
+      actionVariant="danger"
       onAction={resetWorkspace}
     >
       <div className="stack-sm">
@@ -61,8 +62,8 @@ export function ProfilePanel() {
           />
         </label>
         <div className="summary-block">
-          <strong>Saved Notes</strong>
-          <p>{user.savedNotes} local notes captured in this browser.</p>
+          <strong>Saved Evidence</strong>
+          <p>{user.savedNotes} evidence records saved in this browser.</p>
         </div>
       </div>
     </SectionCard>

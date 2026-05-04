@@ -5,6 +5,7 @@ type SectionCardProps = {
   subtitle: string;
   actionLabel?: string;
   actionDisabled?: boolean;
+  actionVariant?: 'primary' | 'secondary' | 'danger';
   onAction?: () => void;
   children: ReactNode;
 };
@@ -14,9 +15,17 @@ export function SectionCard({
   subtitle,
   actionLabel,
   actionDisabled,
+  actionVariant = 'secondary',
   onAction,
   children,
 }: SectionCardProps) {
+  const actionClassName =
+    actionVariant === 'primary'
+      ? 'solid-button section-action-button'
+      : actionVariant === 'danger'
+        ? 'danger-button section-action-button'
+        : 'ghost-button section-action-button';
+
   return (
     <section className="section-card">
       <div className="section-card-header">
@@ -25,7 +34,12 @@ export function SectionCard({
           <h2>{title}</h2>
         </div>
         {actionLabel ? (
-          <button className="ghost-button" disabled={actionDisabled} onClick={onAction}>
+          <button
+            className={actionClassName}
+            disabled={actionDisabled || !onAction}
+            onClick={onAction}
+            type="button"
+          >
             {actionLabel}
           </button>
         ) : null}

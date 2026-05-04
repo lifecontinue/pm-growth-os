@@ -1,159 +1,253 @@
+import { randomUUID } from 'node:crypto';
+
 export const initialCapabilities = [
   {
     id: 'prompt-engineering',
     name: 'Prompt Engineering',
-    category: '技能层',
-    progress: 72,
-    stageLabel: '进阶',
-    summary: '已经能写出稳定结构化 Prompt，正在强化约束设计。',
-    evidenceCount: 6,
-    updatedAt: '2026-05-01',
+    category: 'Skills',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Start by saving one real prompt experiment or AI product task as evidence.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'ai-product-strategy',
+    name: 'AI Product Strategy',
+    category: 'Strategy',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Connect AI capability choices to user value, market timing, product bets, and measurable outcomes.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'user-research-synthesis',
+    name: 'User Research Synthesis',
+    category: 'Discovery',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Use AI to synthesize interviews, feedback, support tickets, and behavior signals without losing nuance.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
   },
   {
     id: 'context-engineering',
     name: 'Context Engineering',
-    category: '技能层',
-    progress: 48,
-    stageLabel: '进阶',
-    summary: '开始理解长对话衰减、摘要压缩和状态切片。',
-    evidenceCount: 4,
-    updatedAt: '2026-05-01',
+    category: 'Skills',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Learn how to structure context, memory, and summaries for repeatable AI workflows.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'rag-knowledge-systems',
+    name: 'RAG & Knowledge Systems',
+    category: 'Knowledge',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Design retrieval, grounding, source quality, chunking, and knowledge workflows for reliable AI products.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
   },
   {
     id: 'agent-design',
     name: 'Agent Design',
-    category: '应用层',
-    progress: 31,
-    stageLabel: '入门',
-    summary: '正在学习 Agent 角色拆分、handoff 和 guardrails。',
-    evidenceCount: 3,
-    updatedAt: '2026-05-01',
+    category: 'Application',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Map simple agent roles, handoffs, tools, and review points as you learn.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'tool-orchestration',
+    name: 'Tool Orchestration',
+    category: 'Tooling',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Plan how agents call tools, APIs, databases, search, and human checkpoints safely and usefully.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
   },
   {
     id: 'ai-evaluation',
     name: 'AI Evaluation',
-    category: '工具层',
-    progress: 16,
-    stageLabel: '入门',
-    summary: '需要把观察、指标和回归校验纳入日常工作流。',
-    evidenceCount: 1,
-    updatedAt: '2026-05-01',
+    category: 'Tooling',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Define what good AI output means before building complex workflows.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'experimentation-metrics',
+    name: 'Experimentation & Metrics',
+    category: 'Evaluation',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Define success metrics, offline evals, product experiments, and learning loops for AI features.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'ai-safety-governance',
+    name: 'AI Safety & Governance',
+    category: 'Governance',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Identify risk boundaries, policy constraints, privacy concerns, review flows, and launch readiness.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'automation-ops',
+    name: 'Automation Ops',
+    category: 'Operations',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Turn repeated PM workflows into maintainable automations with monitoring, fallback, and ownership.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'product-storytelling',
+    name: 'Product Storytelling',
+    category: 'Growth',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Translate AI product work into narratives, demos, release notes, stakeholder updates, and adoption loops.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
+  },
+  {
+    id: 'multi-agent-collaboration',
+    name: 'Multi-Agent Collaboration',
+    category: 'Application',
+    progress: 0,
+    stageLabel: 'Not started',
+    summary: 'Design specialist agents, handoffs, review loops, and collaboration patterns for complex PM workflows.',
+    evidenceCount: 0,
+    updatedAt: 'Not started',
   },
 ];
 
 export const initialCoachPlan = {
-  description: 'Coach Agent 基于你最近的记录，建议先完成最小闭环：记录 -> 识别 -> 更新画像。',
+  description:
+    'Start by saving one real AI product evidence record. The Coach Agent will generate a personalized learning path after your first evidence record or selected skill.',
   steps: [
     {
-      id: 'define-input',
-      title: 'Step 1: 明确输入结构',
-      detail: '确定记录内容至少包含原文、标签候选、时间、关联维度。',
+      id: 'first-note',
+      title: 'Step 1: Save your first evidence record',
+      detail: 'Open New Evidence and write about one AI product task, question, failure, or insight from today.',
       status: 'active',
     },
     {
-      id: 'profile-rules',
-      title: 'Step 2: 设计画像更新规则',
-      detail: '为阶段、能力进度和长期目标建立结构化写入策略。',
+      id: 'pick-skill',
+      title: 'Step 2: Pick one skill to grow',
+      detail: 'Use Growth Map to choose a capability such as Strategy, Research Synthesis, Context Engineering, Agent Design, RAG, Evaluation, or Governance.',
       status: 'todo',
     },
     {
-      id: 'validate-handoff',
-      title: 'Step 3: 验证一次完整流转',
-      detail: '用单条记录跑通 Capture Agent 到 Profile Agent 的 handoff。',
+      id: 'generate-learning-path',
+      title: 'Step 3: Generate your first learning path',
+      detail: 'Use Coach Agent to turn the selected capability into a Learn, Practice, Evidence, Reflect workflow.',
       status: 'todo',
     },
   ],
 };
 
 export const initialWeeklySummary = {
-  period: '2026 年 5 月第 1 周',
-  progress: [
-    '完成 Agent-first PRD 目录与核心章节重构。',
-    '定义 Capture / Coach / Reflection / Profile 四个关键角色。',
-    '开始搭建前端工作区和首页模块骨架。',
-  ],
+  period: 'Your first week',
+  progress: ['No progress recorded yet. Save your first evidence record to begin.'],
   nextActions: [
-    '实现 Capture 表单的交互与本地持久化。',
-    '补全 Capability 和 Note 的状态更新逻辑。',
-    '增加周报草稿的生成与编辑视图。',
+    'Write one real AI product evidence record.',
+    'Choose one capability in Growth Map.',
+    'Generate a focused learning path with Coach Agent.',
   ],
 };
 
 export const initialUserProfile = {
-  currentStageLabel: '从工具使用者走向工作流设计者',
+  currentStageLabel: 'New workspace',
   weeklyGoal: 4,
-  focusArea: 'Agent Workflow',
-  preferredModel: 'GPT + Claude 双模型',
-  longTermGoal: '建立一套能持续沉淀 AI PM 能力的个人操作系统。',
+  focusArea: 'Choose your first focus',
+  preferredModel: 'Default platform model',
+  longTermGoal: 'Build a personal operating system for compounding AI PM capability.',
   savedNotes: 0,
-  lastInsight: '还没有保存新记录，先从一条真实工作思考开始。',
+  lastInsight: 'No evidence yet. Start by saving one real AI product moment.',
 };
 
 export const initialToolConnectors = [
   {
-    id: 'openai',
-    name: 'OpenAI API（平台托管）',
+    id: 'local-ai',
+    name: 'Local AI Heuristics',
     category: 'llm',
-    method: 'env',
+    method: 'local',
     scope: 'platform',
-    status: process.env.OPENAI_API_KEY ? 'configured' : 'not_connected',
-    description: '平台统一配置的默认 LLM 能力，普通用户无需提供 API key。',
-    useCases: ['Capture 语义识别', 'Reflection 周报生成', 'Coach 探索任务', 'LLM-as-Judge'],
-    requiredInputs: ['平台管理员配置 OPENAI_API_KEY', 'OPENAI_MODEL 可选'],
-    envKeys: ['OPENAI_API_KEY', 'OPENAI_MODEL'],
-    enabled: Boolean(process.env.OPENAI_API_KEY),
+    status: 'enabled',
+    description: 'Runs local evidence inference, learning plan templates, reflection drafting, and token estimates.',
+    useCases: ['Evidence suggestions', 'Coach planning fallback', 'Weekly reflection draft'],
+    requiredInputs: ['No setup required'],
+    enabled: true,
   },
   {
-    id: 'anthropic',
-    name: 'Anthropic Claude API（平台托管）',
-    category: 'llm',
-    method: 'env',
+    id: 'web-search',
+    name: 'Real Web Search Knowledge Tool',
+    category: 'knowledge',
+    method: 'mcp',
     scope: 'platform',
-    status: process.env.ANTHROPIC_API_KEY ? 'configured' : 'not_connected',
-    description: '平台可选配置的长上下文模型，普通用户无需提供 API key。',
-    useCases: ['长记录总结', '能力复盘', '深度探索建议'],
-    requiredInputs: ['平台管理员配置 ANTHROPIC_API_KEY', 'ANTHROPIC_MODEL 可选'],
-    envKeys: ['ANTHROPIC_API_KEY', 'ANTHROPIC_MODEL'],
-    enabled: Boolean(process.env.ANTHROPIC_API_KEY),
+    status:
+      process.env.TAVILY_API_KEY || process.env.BRAVE_SEARCH_API_KEY || process.env.SERPAPI_API_KEY
+        ? 'configured'
+        : 'not_connected',
+    description: 'Retrieves current learning resources through a server-side search provider.',
+    useCases: ['Learning resources', 'Guided practice', 'Knowledge Tool enrichment'],
+    requiredInputs: ['TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or SERPAPI_API_KEY'],
+    mcpEndpoint: '/api/knowledge-search',
+    accountHint: 'Users do not provide search keys. Configure provider keys in the platform environment.',
+    enabled: Boolean(process.env.TAVILY_API_KEY || process.env.BRAVE_SEARCH_API_KEY || process.env.SERPAPI_API_KEY),
   },
   {
-    id: 'supabase',
-    name: 'Supabase Auth + Database（平台托管）',
-    category: 'workflow',
+    id: 'usage-logs-database',
+    name: 'Usage Logs Database',
+    category: 'database',
+    method: 'env',
+    scope: 'platform',
+    status: process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'needs_account',
+    description: 'Stores token, model, cost, latency, and feature usage in Supabase usage_logs.',
+    useCases: ['Cost audit', 'Feature usage analytics', 'Metabase dashboards'],
+    requiredInputs: ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'usage_logs table'],
+    enabled: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY),
+  },
+  {
+    id: 'langfuse-trace-sink',
+    name: 'Langfuse Trace Sink',
+    category: 'llm',
     method: 'env',
     scope: 'platform',
     status:
-      process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY ? 'configured' : 'not_connected',
-    description: '平台统一配置账号登录、云端数据和多用户隔离。',
-    useCases: ['用户登录', '云端笔记', '多端同步', 'Row Level Security'],
-    requiredInputs: ['平台管理员配置 SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'],
-    envKeys: ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'],
-    enabled: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
-  },
-  {
-    id: 'mcp-memory',
-    name: 'MCP Memory / Knowledge（平台可选）',
-    category: 'mcp',
-    method: 'mcp',
-    scope: 'platform',
-    status: process.env.MCP_MEMORY_URL ? 'configured' : 'not_connected',
-    description: '平台可选配置的长期记忆/知识库 MCP，用户无需自己部署。',
-    useCases: ['长期记忆检索', '项目知识库查询', '上下文恢复'],
-    requiredInputs: ['平台管理员配置 MCP_MEMORY_URL', '可选 MCP_MEMORY_TOKEN'],
-    envKeys: ['MCP_MEMORY_URL', 'MCP_MEMORY_TOKEN'],
-    mcpEndpoint: process.env.MCP_MEMORY_URL ?? '',
-    enabled: Boolean(process.env.MCP_MEMORY_URL),
+      process.env.LANGFUSE_SECRET_KEY && process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_BASE_URL
+        ? 'configured'
+        : 'needs_account',
+    description: 'Forwards usage_logs to Langfuse as trace and generation events.',
+    useCases: ['Trace review', 'Generation cost audit', 'Prompt debugging'],
+    requiredInputs: ['LANGFUSE_SECRET_KEY', 'LANGFUSE_PUBLIC_KEY', 'LANGFUSE_BASE_URL'],
+    accountHint: 'Configure Langfuse keys in the server environment only.',
+    enabled: Boolean(
+      process.env.LANGFUSE_SECRET_KEY && process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_BASE_URL,
+    ),
   },
   {
     id: 'markdown-export',
-    name: 'Markdown Export（内置）',
+    name: 'Markdown Export',
     category: 'export',
     method: 'local',
     scope: 'platform',
     status: 'enabled',
-    description: '内置记录、周报和 trace 导出能力，不需要任何外部账号。',
-    useCases: ['导出记录', '导出周报', '导出模型 trace'],
-    requiredInputs: ['无需配置'],
+    description: 'Exports evidence and generated reviews without an external account.',
+    useCases: ['Export evidence', 'Export weekly reviews', 'Copy artifacts'],
+    requiredInputs: ['No setup required'],
     enabled: true,
   },
   {
@@ -163,10 +257,10 @@ export const initialToolConnectors = [
     method: 'account',
     scope: 'user',
     status: 'needs_account',
-    description: '同步 PM 笔记、学习资料和阶段性总结。',
-    useCases: ['导入历史笔记', '导出周报', '沉淀知识库'],
+    description: 'Optional future sync target for evidence and learning summaries.',
+    useCases: ['Import historical evidence', 'Export weekly reports', 'Build a knowledge base'],
     requiredInputs: ['Notion integration token', 'Database ID'],
-    accountHint: '提供 Notion integration token 和目标 database/page ID 后可连接。',
+    accountHint: 'Static mode stores this setup hint locally. Real sync requires a serverless connector.',
     enabled: false,
   },
   {
@@ -176,23 +270,10 @@ export const initialToolConnectors = [
     method: 'account',
     scope: 'user',
     status: 'needs_account',
-    description: '关联代码仓库、PR、issue 和 AI PM 实践项目证据。',
-    useCases: ['导入 issue/PR 记录', '追踪 Vibe Coding 产出', '生成项目复盘'],
-    requiredInputs: ['GitHub token 或 MCP GitHub server'],
-    accountHint: '可通过 GitHub token 或 GitHub MCP server 连接。',
-    enabled: false,
-  },
-  {
-    id: 'feishu',
-    name: '飞书 / Lark',
-    category: 'workflow',
-    method: 'account',
-    scope: 'user',
-    status: 'needs_account',
-    description: '对接飞书文档、周报和团队协作文档。',
-    useCases: ['导出周报', '同步项目文档', '沉淀复盘'],
-    requiredInputs: ['App ID', 'App Secret', '文档或多维表格权限'],
-    accountHint: '需要你提供飞书开放平台应用凭证和目标文档权限。',
+    description: 'Optional future connector for issues, pull requests, and project evidence.',
+    useCases: ['Import issue evidence', 'Track shipping evidence', 'Generate project retrospectives'],
+    requiredInputs: ['GitHub token or GitHub MCP server'],
+    accountHint: 'Static mode does not call GitHub directly. Use this as a local setup note for now.',
     enabled: false,
   },
 ];
@@ -200,18 +281,15 @@ export const initialToolConnectors = [
 export function createInitialWorkspace() {
   return {
     capabilities: structuredClone(initialCapabilities),
-    captureDraft:
-      '今天把 PRD 重写成 Agent-first 结构后，我更清楚这个产品不是一个普通笔记工具，而是一个能持续维护成长状态的工作流系统。接下来想把 Capture 和 Profile 先串起来。',
-    captureSuggestions: inferCaptureSuggestions(
-      '今天把 PRD 重写成 Agent-first 结构后，我更清楚这个产品不是一个普通笔记工具，而是一个能持续维护成长状态的工作流系统。接下来想把 Capture 和 Profile 先串起来。',
-      initialCapabilities,
-    ),
+    captureDraft: '',
+    captureSuggestions: inferCaptureSuggestions('', initialCapabilities),
     coachPlan: structuredClone(initialCoachPlan),
     modelTraces: [],
     notes: [],
     reflectionDraft: '',
     selectedCapabilityId: initialCapabilities[0]?.id ?? '',
     toolConnectors: structuredClone(initialToolConnectors),
+    usageLogs: [],
     weeklySummary: structuredClone(initialWeeklySummary),
     userProfile: structuredClone(initialUserProfile),
     updatedAt: new Date().toISOString(),
@@ -222,22 +300,67 @@ const rules = [
   {
     capabilityId: 'prompt-engineering',
     tags: ['PromptEngineering'],
-    keywords: ['prompt', '提示词', 'few-shot', 'chain-of-thought', 'cot', '约束'],
+    keywords: ['prompt', 'instruction', 'few-shot', 'chain-of-thought', 'cot', 'constraint', 'example'],
+  },
+  {
+    capabilityId: 'ai-product-strategy',
+    tags: ['ProductStrategy', 'Roadmap'],
+    keywords: ['strategy', 'roadmap', 'opportunity', 'bet', 'positioning', 'market', 'business model'],
+  },
+  {
+    capabilityId: 'user-research-synthesis',
+    tags: ['ResearchSynthesis', 'Discovery'],
+    keywords: ['research', 'interview', 'feedback', 'insight', 'persona', 'customer', 'survey', 'synthesis'],
   },
   {
     capabilityId: 'context-engineering',
     tags: ['ContextEngineering', 'Memory'],
-    keywords: ['context', '上下文', '记忆', '状态', '压缩', '窗口', '长期记忆'],
+    keywords: ['context', 'memory', 'state', 'summary', 'retrieval', 'window', 'rag'],
+  },
+  {
+    capabilityId: 'rag-knowledge-systems',
+    tags: ['RAG', 'KnowledgeSystems'],
+    keywords: ['rag', 'retrieval', 'embedding', 'knowledge base', 'citation', 'grounding', 'source'],
   },
   {
     capabilityId: 'agent-design',
     tags: ['AgentDesign', 'Workflow'],
-    keywords: ['agent', 'handoff', '工作流', '编排', '工具调用', 'profile', 'capture'],
+    keywords: ['agent', 'handoff', 'workflow', 'planner', 'executor', 'reviewer'],
+  },
+  {
+    capabilityId: 'tool-orchestration',
+    tags: ['ToolOrchestration', 'Workflow'],
+    keywords: ['tool call', 'tool use', 'api', 'mcp', 'connector', 'orchestration', 'automation'],
   },
   {
     capabilityId: 'ai-evaluation',
     tags: ['Evaluation', 'Guardrails'],
-    keywords: ['评测', 'eval', '指标', '观测', 'trace', 'guardrail', '护栏', '质量'],
+    keywords: ['eval', 'evaluation', 'metric', 'trace', 'guardrail', 'quality', 'judge'],
+  },
+  {
+    capabilityId: 'experimentation-metrics',
+    tags: ['Experimentation', 'Metrics'],
+    keywords: ['experiment', 'ab test', 'baseline', 'conversion', 'activation', 'retention', 'north star'],
+  },
+  {
+    capabilityId: 'ai-safety-governance',
+    tags: ['Safety', 'Governance'],
+    keywords: ['safety', 'risk', 'privacy', 'security', 'policy', 'compliance', 'governance', 'red team'],
+  },
+  {
+    capabilityId: 'automation-ops',
+    tags: ['AutomationOps', 'Operations'],
+    keywords: ['ops', 'runbook', 'monitoring', 'alert', 'incident', 'fallback', 'rollback', 'cron'],
+  },
+  {
+    capabilityId: 'product-storytelling',
+    tags: ['Storytelling', 'Adoption'],
+    keywords: ['story', 'narrative', 'demo', 'launch', 'release note', 'stakeholder', 'adoption'],
+  },
+  {
+    capabilityId: 'multi-agent-collaboration',
+    tags: ['MultiAgent', 'Collaboration'],
+    keywords: ['multi-agent', 'multi agent', 'specialist agent', 'handoff protocol', 'agent team', 'collaboration'],
   },
 ];
 
@@ -247,9 +370,7 @@ export function inferCaptureSuggestions(draft, capabilities) {
   const tags = new Set();
 
   for (const rule of rules) {
-    const hasKeyword = rule.keywords.some((keyword) =>
-      normalizedDraft.includes(keyword.toLowerCase()),
-    );
+    const hasKeyword = rule.keywords.some((keyword) => normalizedDraft.includes(keyword.toLowerCase()));
 
     if (hasKeyword) {
       matchedRuleIds.add(rule.capabilityId);
@@ -282,31 +403,130 @@ export function generateCoachPlan({ capabilities, notes, targetCapabilityId, use
   const defaultCapability = capabilities.slice().sort((a, b) => a.progress - b.progress)[0];
   const targetCapability =
     capabilities.find((capability) => capability.id === targetCapabilityId) ?? defaultCapability;
-  const strongestCapability = capabilities.slice().sort((a, b) => b.progress - a.progress)[0];
+  const strongestCapability = capabilities.slice().sort((a, b) => b.progress - a.progress)[0] ?? targetCapability;
   const recentTopic = notes[0]?.tags[0] ?? userProfile.focusArea;
+  const practiceTask = buildPracticeTask(targetCapability, recentTopic);
 
   return {
-    description: `Coach Agent 建议围绕 ${targetCapability.name} 建一个小任务，并借用 ${strongestCapability.name} 的已有经验降低启动成本。`,
+    description: [
+      `**${targetCapability.name} learning sprint**`,
+      `Use one small Learn -> Practice -> Evidence -> Reflect loop to make progress this week.`,
+      `Use ${strongestCapability.name} as leverage because it is currently your strongest adjacent capability.`,
+    ].join('\n\n'),
     steps: [
       {
-        id: 'inspect-gap',
-        title: 'Step 1: 定义能力缺口',
-        detail: `写下 ${targetCapability.name} 目前最不确定的 1 个问题，并补充一个真实工作场景。`,
+        id: 'learn',
+        title: 'Learn: define the capability gap',
+        detail: `Write the one question about ${targetCapability.name} that feels most uncertain right now.`,
         status: 'active',
       },
       {
-        id: 'run-micro-practice',
-        title: 'Step 2: 完成微型实践',
-        detail: `基于 ${recentTopic} 设计一个 20 分钟内能完成的练习，并记录输入、输出和判断标准。`,
+        id: 'practice',
+        title: 'Practice: run one focused exercise',
+        detail: practiceTask,
         status: 'todo',
       },
       {
-        id: 'capture-evidence',
-        title: 'Step 3: 沉淀能力证据',
-        detail: `把实践结果写成一条记录，关联到 ${targetCapability.name}，并说明它如何改变你的判断。`,
+        id: 'capture',
+        title: 'Evidence: save progress to Growth Map',
+        detail: `Save the practice result as one evidence record linked to ${targetCapability.name}. Explain how it changed your product judgment.`,
+        status: 'todo',
+      },
+      {
+        id: 'reflect',
+        title: 'Reflect: choose the next iteration',
+        detail: `Write what became clearer, what is still uncertain, and the next smallest experiment for ${targetCapability.name}.`,
         status: 'todo',
       },
     ],
+  };
+}
+
+function buildPracticeTask(targetCapability, focusArea) {
+  const playbook = getPracticePlaybook(targetCapability.id, focusArea);
+
+  return [
+    `30-minute ${targetCapability.name} practice`,
+    '',
+    `Recommended tool: ${playbook.tool}`,
+    `Working artifact: ${playbook.artifact}`,
+    '',
+    'Steps:',
+    ...playbook.steps.map((step, index) => `${index + 1}. ${step}`),
+    '',
+    `Output to save as evidence: ${playbook.output}`,
+    `Done when: ${playbook.doneWhen}`,
+  ].join('\n');
+}
+
+function getPracticePlaybook(capabilityId, focusArea) {
+  const playbooks = {
+    'prompt-engineering': {
+      tool: 'ChatGPT, Claude, or Codex chat. Use the same model for baseline and improved attempts.',
+      artifact: `A real PM artifact from ${focusArea}: PRD section, user story, discovery notes, launch message, or customer feedback summary.`,
+      steps: [
+        'Run your normal prompt on the artifact and save the baseline output.',
+        'Extract one prompt pattern from a learning resource, such as role + context + constraints + examples + output format.',
+        'Rewrite the prompt using that pattern while keeping the source artifact unchanged.',
+        'Run the improved prompt and compare clarity, completeness, actionability, and hallucination risk.',
+        'Save the winning prompt, better output, and one sentence explaining why it improved.',
+      ],
+      output: 'Baseline prompt, improved prompt, before/after comparison, and one reusable prompt pattern.',
+      doneWhen: 'You can explain which prompt change improved the PM artifact and when to reuse it.',
+    },
+    'context-engineering': {
+      tool: 'ChatGPT, Claude, or a Markdown editor plus an AI chat for testing context packets.',
+      artifact: `A messy context source from ${focusArea}: meeting notes, long chat, PRD draft, research snippets, or backlog comments.`,
+      steps: [
+        'Choose one task the model should perform.',
+        'Create a context packet with goal, known facts, constraints, and source excerpts.',
+        'Run the task once with raw context and once with the structured context packet.',
+        'Compare missing details, irrelevant details, and wrong assumptions.',
+        'Save the reusable context packet structure and one example output.',
+      ],
+      output: 'Messy context, structured context packet, output comparison, and reusable template.',
+      doneWhen: 'The structured packet produces a more reliable answer with less noise.',
+    },
+    'agent-design': {
+      tool: 'Mermaid, Whimsical, Miro, FigJam, or a Markdown flowchart with ChatGPT/Claude as reviewer.',
+      artifact: `One repeatable workflow from ${focusArea}: research synthesis, PRD drafting, feedback triage, release planning, or metric review.`,
+      steps: [
+        'Write the workflow goal and final artifact.',
+        'Map steps with role, input, tool, output, and human review point.',
+        'Add an explicit approval checkpoint for one risky step.',
+        'Ask an AI reviewer to find missing state, unclear handoffs, and failure modes.',
+        'Save the revised workflow and top three failure modes.',
+      ],
+      output: 'Agent workflow map, handoff artifacts, review checkpoints, and failure modes.',
+      doneWhen: 'Another PM could follow the workflow without asking what the agent should do next.',
+    },
+    'ai-evaluation': {
+      tool: 'Google Sheets/Excel plus ChatGPT/Claude for rubric drafting and output comparison.',
+      artifact: `Three real or sample AI outputs from ${focusArea}, such as summaries, requirements, release notes, or support answers.`,
+      steps: [
+        'Define the job-to-be-done and what a good answer must include.',
+        'Create a 5-point rubric for correctness, usefulness, specificity, risk, and tone.',
+        'Score three outputs in a spreadsheet with one sentence of evidence for each score.',
+        'Ask an AI judge to score the same outputs using your rubric.',
+        'Compare scores and revise one unclear criterion.',
+      ],
+      output: 'Evaluation rubric, scored examples, disagreement notes, and one revised criterion.',
+      doneWhen: 'The rubric catches at least one quality difference that vague preference would miss.',
+    },
+  };
+
+  return playbooks[capabilityId] ?? {
+    tool: 'ChatGPT, Claude, a spreadsheet, and a Markdown decision note.',
+    artifact: `One real PM workflow from ${focusArea}: product strategy, research synthesis, workflow automation, launch planning, or quality review.`,
+    steps: [
+      'Define the capability question you want to answer in this workflow.',
+      'Choose one real artifact or workflow sample instead of a toy example.',
+      'Ask AI to produce a first-pass output and record the prompt, context, and assumptions.',
+      'Critique the result against usefulness, correctness, risk, and next-action clarity.',
+      'Save the improved artifact and one reusable operating rule.',
+    ],
+    output: 'Real PM artifact, AI-assisted method, quality critique, and reusable operating rule.',
+    doneWhen: 'You can explain what improved in the workflow and what evidence supports the improvement.',
   };
 }
 
@@ -319,14 +539,12 @@ export function generateWeeklyMarkdown({ capabilities, notes, userProfile, weekl
     )
     .sort((a, b) => b.progress - a.progress);
   const progressItems =
-    recentNotes.length > 0
-      ? recentNotes.map((note) => summarizeNote(note.content))
-      : weeklySummary.progress;
+    recentNotes.length > 0 ? recentNotes.map((note) => summarizeNote(note.content)) : weeklySummary.progress;
   const capabilityItems =
     activeCapabilities.length > 0
       ? activeCapabilities.map(
           (capability) =>
-            `${capability.name}: ${capability.progress}% 进度，累计 ${capability.evidenceCount} 条证据`,
+            `${capability.name}: ${capability.progress}% progress, ${capability.evidenceCount} evidence records`,
         )
       : capabilities
           .slice()
@@ -337,50 +555,48 @@ export function generateWeeklyMarkdown({ capabilities, notes, userProfile, weekl
     recentNotes.length > 0
       ? [
           userProfile.lastInsight,
-          `围绕 ${userProfile.focusArea} 再补 2 条真实工作记录`,
-          '把本周最有价值的一条记录整理成可复用案例',
+          `Add two more real work evidence records around ${userProfile.focusArea}.`,
+          'Turn the most useful evidence record into a reusable case.',
         ]
       : weeklySummary.nextActions;
 
   return [
-    `# ${period} 周报`,
+    `# ${period} Review`,
     '',
-    '## 本周进展',
+    '## Progress',
     ...progressItems.map((item, index) => `${index + 1}. ${item}`),
     '',
-    '## 能力变化',
+    '## Capability Changes',
     ...capabilityItems.map((item, index) => `${index + 1}. ${item}`),
     '',
-    '## 下周计划',
+    '## Next Week',
     ...nextActions.map((item, index) => `${index + 1}. ${item}`),
     '',
-    '## 反思',
-    `本周重点集中在 ${userProfile.focusArea}。下一步需要把零散记录进一步沉淀为明确的能力证据和可复用方法。`,
+    '## Reflection',
+    `This week focused on ${userProfile.focusArea}. The next step is to convert scattered evidence into clear capability signals and reusable methods.`,
   ].join('\n');
 }
 
 export function exportNotesToMarkdown(notes, capabilities) {
-  const capabilityNameById = new Map(
-    capabilities.map((capability) => [capability.id, capability.name]),
-  );
+  const capabilityNameById = new Map(capabilities.map((capability) => [capability.id, capability.name]));
 
   if (notes.length === 0) {
-    return '# PM Growth OS 记录导出\n\n暂无记录。\n';
+    return '# PM Growth OS Evidence Export\n\nNo evidence records yet.\n';
   }
 
   return [
-    '# PM Growth OS 记录导出',
+    '# PM Growth OS Evidence Export',
     '',
-    `导出时间：${new Date().toLocaleString('zh-CN')}`,
-    `记录数量：${notes.length}`,
+    `Exported at: ${new Date().toLocaleString('en-US')}`,
+    `Evidence record count: ${notes.length}`,
     '',
     ...notes.flatMap((note, index) => [
-      `## ${index + 1}. ${new Date(note.createdAt).toLocaleString('zh-CN')}`,
+      `## ${index + 1}. ${new Date(note.createdAt).toLocaleString('en-US')}`,
       '',
       note.content,
       '',
-      `能力维度：${formatCapabilities(note, capabilityNameById)}`,
-      `标签：${note.tags.length > 0 ? note.tags.map((tag) => `#${tag}`).join(' ') : '无'}`,
+      `Capabilities: ${formatCapabilities(note, capabilityNameById)}`,
+      `Tags: ${note.tags.length > 0 ? note.tags.map((tag) => `#${tag}`).join(' ') : 'None'}`,
       '',
     ]),
   ].join('\n');
@@ -392,7 +608,7 @@ export function createModelCallTrace({ agent, operation, prompt, completion, sta
   const totalTokens = promptTokens + completionTokens;
 
   return {
-    id: crypto.randomUUID(),
+    id: randomUUID(),
     agent,
     operation,
     model: 'pm-growth-local-agent',
@@ -409,10 +625,10 @@ export function createModelCallTrace({ agent, operation, prompt, completion, sta
 }
 
 export function getStageLabel(progress) {
-  if (progress >= 75) return '精通冲刺';
-  if (progress >= 45) return '进阶';
-  if (progress > 0) return '入门';
-  return '未探索';
+  if (progress >= 75) return 'Mastery Sprint';
+  if (progress >= 45) return 'Advancing';
+  if (progress > 0) return 'Foundational';
+  return 'Not started';
 }
 
 function getConfidence(draft, matchCount) {
@@ -423,21 +639,39 @@ function getConfidence(draft, matchCount) {
 
 function getReason(capabilityId) {
   const reasons = {
-    'prompt-engineering': '记录中出现了提示词、约束或示例学习相关线索。',
-    'context-engineering': '记录中出现了上下文、状态或记忆管理相关线索。',
-    'agent-design': '记录中出现了 Agent、角色协作或工作流相关线索。',
-    'ai-evaluation': '记录中出现了评测、观测或质量护栏相关线索。',
+    'prompt-engineering': 'The note mentions prompts, instructions, examples, or constraints.',
+    'ai-product-strategy': 'The note mentions product strategy, roadmap bets, opportunity sizing, or market context.',
+    'user-research-synthesis': 'The note mentions user research, feedback, interviews, or insight synthesis.',
+    'context-engineering': 'The note mentions context, state, memory, summaries, or retrieval.',
+    'rag-knowledge-systems': 'The note mentions retrieval, knowledge bases, grounding, citations, or source quality.',
+    'agent-design': 'The note mentions agents, handoffs, tools, or multi-step workflows.',
+    'tool-orchestration': 'The note mentions tools, APIs, connectors, MCP, or workflow orchestration.',
+    'ai-evaluation': 'The note mentions evaluation, metrics, tracing, quality, or guardrails.',
+    'experimentation-metrics': 'The note mentions experiments, baselines, product metrics, or decision rules.',
+    'ai-safety-governance': 'The note mentions AI risk, policy, privacy, compliance, or launch governance.',
+    'automation-ops': 'The note mentions automation operations, runbooks, monitoring, or recovery paths.',
+    'product-storytelling': 'The note mentions product narratives, demos, launch messaging, or adoption.',
+    'multi-agent-collaboration': 'The note mentions specialist agents, agent teams, handoffs, or collaboration rules.',
   };
 
-  return reasons[capabilityId] ?? '这条记录可以沉淀为一个新的成长证据。';
+  return reasons[capabilityId] ?? 'This note can become new growth evidence.';
 }
 
 function getNextPrompt(capabilityId) {
   const prompts = {
-    'prompt-engineering': '下一步可以补一条「什么输入让 Prompt 失效」的反例记录。',
-    'context-engineering': '下一步可以写清楚哪些状态需要进长期记忆，哪些只留在会话里。',
-    'agent-design': '下一步可以画出 Capture 到 Profile 的 handoff 输入输出。',
-    'ai-evaluation': '下一步可以定义一个判断输出好坏的最小指标。',
+    'prompt-engineering': 'Next, save one example where the prompt failed and what constraint might fix it.',
+    'ai-product-strategy': 'Next, write the smallest assumption that must be true for this AI product bet to matter.',
+    'user-research-synthesis': 'Next, link the insight to one source quote, signal, or counterexample.',
+    'context-engineering': 'Next, identify what state should be remembered, summarized, or discarded.',
+    'rag-knowledge-systems': 'Next, identify one source that should be trusted, refreshed, or excluded.',
+    'agent-design': 'Next, sketch the inputs and outputs for one agent handoff.',
+    'tool-orchestration': 'Next, define the tool input, output, permission, and fallback behavior.',
+    'ai-evaluation': 'Next, define one minimal criterion for deciding whether the AI output is good enough.',
+    'experimentation-metrics': 'Next, define the baseline, success metric, and stop/continue rule.',
+    'ai-safety-governance': 'Next, write the highest-risk failure mode and one launch gate.',
+    'automation-ops': 'Next, define what should be monitored and who owns the fallback.',
+    'product-storytelling': 'Next, turn this into a before/after product story with one proof point.',
+    'multi-agent-collaboration': 'Next, write the handoff artifact and the review rule between two agents.',
   };
 
   return prompts[capabilityId ?? 'agent-design'];
@@ -445,21 +679,21 @@ function getNextPrompt(capabilityId) {
 
 function summarizeNote(content) {
   const normalized = content.replace(/\s+/g, ' ').trim();
-  return normalized.length <= 52 ? normalized : `${normalized.slice(0, 52)}...`;
+  return normalized.length <= 72 ? normalized : `${normalized.slice(0, 72)}...`;
 }
 
 function getCurrentWeekLabel() {
   const now = new Date();
-  return `${now.getFullYear()} 年 ${now.getMonth() + 1} 月第 ${Math.ceil(now.getDate() / 7)} 周`;
+  return `${now.getFullYear()} Week ${Math.ceil(now.getDate() / 7)}`;
 }
 
 function formatCapabilities(note, capabilityNameById) {
-  if (note.relatedCapabilityIds.length === 0) return '未关联';
+  if (note.relatedCapabilityIds.length === 0) return 'None';
   return note.relatedCapabilityIds.map((id) => capabilityNameById.get(id) ?? id).join(' / ');
 }
 
 function estimateTokens(text) {
-  const trimmed = text.trim();
+  const trimmed = String(text ?? '').trim();
   if (!trimmed) return 0;
 
   const cjkChars = [...trimmed].filter((char) => /[\u4e00-\u9fff]/u.test(char)).length;
@@ -472,6 +706,6 @@ function estimateTokens(text) {
 }
 
 function preview(text) {
-  const normalized = text.replace(/\s+/g, ' ').trim();
+  const normalized = String(text ?? '').replace(/\s+/g, ' ').trim();
   return normalized.length <= 120 ? normalized : `${normalized.slice(0, 120)}...`;
 }

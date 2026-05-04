@@ -28,7 +28,7 @@ export function generateWeeklyMarkdown({
     activeCapabilities.length > 0
       ? activeCapabilities.map(
           (capability) =>
-            `${capability.name}: ${capability.progress}% progress, ${capability.evidenceCount} evidence notes`,
+            `${capability.name}: ${capability.progress}% progress, ${capability.evidenceCount} evidence records`,
         )
       : capabilities
           .slice()
@@ -40,8 +40,8 @@ export function generateWeeklyMarkdown({
     recentNotes.length > 0
       ? [
           userProfile.lastInsight,
-          `Add two more real work notes around ${userProfile.focusArea}.`,
-          'Turn the most valuable note this week into a reusable case study.',
+          `Add two more real work evidence records around ${userProfile.focusArea}.`,
+          'Turn the most valuable evidence record this week into a reusable case study.',
         ]
       : weeklySummary.nextActions;
 
@@ -58,7 +58,7 @@ export function generateWeeklyMarkdown({
     ...nextActions.map((item, index) => `${index + 1}. ${item}`),
     '',
     '## Reflection',
-    `This week centered on ${userProfile.focusArea}. Next, convert scattered notes into clear capability evidence and reusable methods.`,
+    `This week centered on ${userProfile.focusArea}. Next, convert scattered evidence into clear capability signals and reusable methods.`,
   ].join('\n');
 }
 

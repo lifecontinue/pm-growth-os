@@ -7,18 +7,24 @@ import {
   defaultSuggestions,
   userProfile,
   weeklySummary,
-} from './mock-data';
-import { createModelCallTrace } from './model-telemetry';
+} from './initial-workspace-data';
+import {
+  createModelCallTrace,
+  createUsageLogFromTrace,
+} from './model-telemetry';
 import { generateWeeklyMarkdown } from './reflection-generator';
 import type {
   Capability,
   CaptureSuggestions,
+  ModelCallTrace,
   ToolConnector,
+  UsageLog,
   UserProfile,
   WorkspaceState,
 } from '../types/domain';
 
 const STORAGE_KEY = 'pm-growth-os.workspace.v1';
+const WORKSPACE_RESET_KEY = 'pm-growth-os.workspace-reset.v2';
 
 type ConnectorPatch = {
   enabled?: boolean;
@@ -36,8 +42,8 @@ const initialToolConnectors: ToolConnector[] = [
     status: 'enabled',
     scope: 'platform',
     description:
-      'Runs capture inference, coach planning, reflection drafting, and token estimates in the browser.',
-    useCases: ['Capture suggestions', 'Coach plan generation', 'Weekly reflection draft'],
+      'Runs evidence inference, coach planning, reflection drafting, and token estimates in the browser.',
+    useCases: ['Evidence suggestions', 'Coach plan generation', 'Weekly reflection draft'],
     requiredInputs: ['No setup required'],
     enabled: true,
   },
@@ -48,7 +54,7 @@ const initialToolConnectors: ToolConnector[] = [
     method: 'local',
     status: 'enabled',
     scope: 'platform',
-    description: 'Persists notes, growth state, reflection drafts, and traces in this browser.',
+    description: 'Persists evidence, growth state, reflection drafts, and traces in this browser.',
     useCases: ['Offline usage', 'Static Vercel deployment', 'Private local workspace'],
     requiredInputs: ['No setup required'],
     enabled: true,
@@ -58,7 +64,7 @@ const initialToolConnectors: ToolConnector[] = [
     name: 'Real Web Search Knowledge Tool',
     category: 'knowledge',
     method: 'mcp',
-    status: 'enabled',
+    status: 'not_connected',
     scope: 'platform',
     description:
       'Calls the platform search API to retrieve current learning resources, then structures them for Coach Agent guidance.',
@@ -66,7 +72,37 @@ const initialToolConnectors: ToolConnector[] = [
     requiredInputs: ['Platform search API key'],
     mcpEndpoint: '/api/knowledge-search',
     accountHint:
-      'Set TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or SERPAPI_API_KEY in the deployment environment. Users do not need to configure anything.',
+      'Click Test Knowledge Search to verify the API route and provider key. Set TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or SERPAPI_API_KEY in the deployment environment.',
+    enabled: false,
+  },
+  {
+    id: 'usage-logs-database',
+    name: 'Usage Logs Database',
+    category: 'database',
+    method: 'env',
+    status: 'needs_account',
+    scope: 'platform',
+    description:
+      'Stores token, model, cost, latency, and feature usage in a usage_logs table for analytics tools such as Metabase.',
+    useCases: ['Cost audit', 'Feature-level usage analytics', 'Metabase dashboards'],
+    requiredInputs: ['DATABASE_URL', 'usage_logs table migration'],
+    accountHint:
+      'Create the usage_logs table with database/migrations/001_create_usage_logs.sql, then connect Metabase to the same database.',
+    enabled: false,
+  },
+  {
+    id: 'langfuse-trace-sink',
+    name: 'Langfuse Trace Sink',
+    category: 'llm',
+    method: 'env',
+    status: 'configured',
+    scope: 'platform',
+    description:
+      'Receives usage_logs through the server-side gateway and stores trace/generation events in Langfuse.',
+    useCases: ['Trace review', 'Generation cost audit', 'Prompt debugging'],
+    requiredInputs: ['LANGFUSE_SECRET_KEY', 'LANGFUSE_PUBLIC_KEY', 'LANGFUSE_BASE_URL'],
+    accountHint:
+      'Configured in the platform environment. Browser code never receives the Langfuse secret key.',
     enabled: true,
   },
   {
@@ -76,8 +112,8 @@ const initialToolConnectors: ToolConnector[] = [
     method: 'local',
     status: 'enabled',
     scope: 'platform',
-    description: 'Exports notes and trace data without an external account.',
-    useCases: ['Export notes', 'Export model traces', 'Copy weekly reflections'],
+    description: 'Exports evidence and trace data without an external account.',
+    useCases: ['Export evidence', 'Export model traces', 'Copy weekly reflections'],
     requiredInputs: ['No setup required'],
     enabled: true,
   },
@@ -88,8 +124,8 @@ const initialToolConnectors: ToolConnector[] = [
     method: 'account',
     status: 'needs_account',
     scope: 'user',
-    description: 'Optional future sync target for notes and learning summaries.',
-    useCases: ['Import historical notes', 'Export weekly reports', 'Build a knowledge base'],
+    description: 'Optional future sync target for evidence and learning summaries.',
+    useCases: ['Import historical evidence', 'Export weekly reports', 'Build a knowledge base'],
     requiredInputs: ['Notion integration token', 'Database ID'],
     accountHint: 'Static mode stores this setup hint locally. Real sync requires a serverless connector.',
     enabled: false,
@@ -102,7 +138,7 @@ const initialToolConnectors: ToolConnector[] = [
     status: 'needs_account',
     scope: 'user',
     description: 'Optional future connector for issues, PRs, and project evidence.',
-    useCases: ['Import issue notes', 'Track shipping evidence', 'Generate project retrospectives'],
+    useCases: ['Import issue evidence', 'Track shipping evidence', 'Generate project retrospectives'],
     requiredInputs: ['GitHub token or GitHub MCP server'],
     accountHint: 'Static mode does not call GitHub directly. Use this as a local setup note for now.',
     enabled: false,
@@ -115,6 +151,92 @@ export async function fetchWorkspace() {
   return readWorkspace();
 }
 
+export async function fetchBridgeUsageLogsApi() {
+  const endpoints = getUsageLogEndpoints();
+  let lastError: unknown = null;
+  let lastEndpoint = endpoints[0] ?? '/api/usage-logs';
+
+  for (const endpoint of endpoints) {
+    lastEndpoint = endpoint;
+    try {
+      const response = await fetch(endpoint);
+
+      if (!response.ok) {
+        lastError = new Error(`Usage Bridge failed with status ${response.status}.`);
+        continue;
+      }
+
+      const payload = await readJsonResponse<{ usageLogs?: UsageLog[] }>(response, endpoint);
+      return payload.usageLogs ?? [];
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(formatUsageBridgeError(lastError, lastEndpoint));
+}
+
+export async function syncBridgeUsageLogsApi() {
+  const currentWorkspace = readWorkspace();
+  const bridgeLogs = await fetchBridgeUsageLogsApi();
+  const bridgeLogIds = new Set(bridgeLogs.map((log) => log.id));
+  const localOnlyLogs = currentWorkspace.usageLogs.filter((log) => !bridgeLogIds.has(log.id));
+  const pushedLogs = await pushBridgeUsageLogsApi(localOnlyLogs);
+  const nextBridgeLogs = pushedLogs.length > 0 ? await fetchBridgeUsageLogsApi() : bridgeLogs;
+
+  return updateWorkspace((current) => ({
+    ...current,
+    usageLogs: mergeUsageLogs(current.usageLogs, nextBridgeLogs),
+  }));
+}
+
+async function pushBridgeUsageLogsApi(logs: UsageLog[]) {
+  if (logs.length === 0) {
+    return [];
+  }
+
+  const endpoints = getUsageLogEndpoints();
+  let lastError: unknown = null;
+  let lastEndpoint = endpoints[0] ?? '/api/usage-logs';
+
+  for (const endpoint of endpoints) {
+    lastEndpoint = endpoint;
+
+    try {
+      const pushedLogs: UsageLog[] = [];
+
+      for (const log of logs) {
+        const response = await fetch(endpoint, {
+          body: JSON.stringify(log),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          method: 'POST',
+        });
+
+        if (!response.ok) {
+          lastError = new Error(`Usage Bridge push failed with status ${response.status}.`);
+          break;
+        }
+
+        const payload = await readJsonResponse<{ usageLog?: UsageLog }>(response, endpoint);
+
+        if (payload.usageLog) {
+          pushedLogs.push(payload.usageLog);
+        }
+      }
+
+      if (pushedLogs.length === logs.length) {
+        return pushedLogs;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw new Error(formatUsageBridgeError(lastError, lastEndpoint));
+}
+
 export async function resetWorkspaceApi() {
   const workspace = createInitialWorkspace();
   return writeWorkspace(workspace);
@@ -124,7 +246,7 @@ export async function createNoteApi(content: string, selectedCapabilityIds?: str
   const normalizedContent = content.trim();
 
   if (!normalizedContent) {
-    throw new Error('Note content is required.');
+    throw new Error('Evidence content is required.');
   }
 
   return updateWorkspace((current) => {
@@ -135,7 +257,7 @@ export async function createNoteApi(content: string, selectedCapabilityIds?: str
         : buildAdjustedSuggestions(inferredSuggestions, current.capabilities, selectedCapabilityIds);
     const now = new Date().toISOString();
     const trace = createModelCallTrace({
-      agent: 'Capture Agent',
+      agent: 'Evidence Capture',
       operation: 'infer_capture_suggestions',
       prompt: normalizedContent,
       completion: JSON.stringify(suggestions),
@@ -167,6 +289,7 @@ export async function createNoteApi(content: string, selectedCapabilityIds?: str
       captureSuggestions: inferCaptureSuggestions('', nextCapabilities),
       modelTraces: [trace, ...current.modelTraces],
       notes: [note, ...current.notes],
+      usageLogs: [createUsageLogFromTrace(trace), ...current.usageLogs],
       userProfile: {
         ...current.userProfile,
         focusArea: suggestions.relatedCapabilities[0]?.name ?? current.userProfile.focusArea,
@@ -233,12 +356,34 @@ export async function generateCoachPlanApi(capabilityId?: string) {
       }),
       completion: JSON.stringify(nextPlan.learningGuide?.resources ?? []),
     });
+    const reviewTrace = createModelCallTrace({
+      agent: 'Learning Review Agent',
+      operation: 'review_learning_path_quality',
+      prompt: JSON.stringify({
+        capabilityId: nextPlan.learningGuide?.capabilityId,
+        resources: nextPlan.learningGuide?.resources?.map((resource) => ({
+          title: resource.title,
+          type: resource.resourceType,
+          source: resource.source,
+        })),
+        practiceTask: nextPlan.learningGuide?.practiceTask,
+        practiceTasks: nextPlan.learningGuide?.practiceTasks,
+        evidenceTemplate: nextPlan.learningGuide?.captureTemplate,
+      }),
+      completion: JSON.stringify(nextPlan.learningGuide?.review ?? null),
+    });
 
     return {
       ...current,
       coachPlan: nextPlan,
-      modelTraces: [knowledgeTrace, coachTrace, ...current.modelTraces],
+      modelTraces: [reviewTrace, knowledgeTrace, coachTrace, ...current.modelTraces],
       selectedCapabilityId: capabilityId ?? current.selectedCapabilityId,
+      usageLogs: [
+        createUsageLogFromTrace(reviewTrace),
+        createUsageLogFromTrace(knowledgeTrace),
+        createUsageLogFromTrace(coachTrace),
+        ...current.usageLogs,
+      ],
       userProfile: {
         ...current.userProfile,
         focusArea: targetCapability?.name ?? current.userProfile.focusArea,
@@ -264,10 +409,19 @@ export async function sendLearningResourceToCaptureApi(resourceId: string) {
       '',
       `Why this matters: ${resource.whyUseful}`,
       '',
-      'Practice task:',
-      guide.practiceTask,
+      'Practice tasks:',
+      ...(guide.practiceTasks?.length
+        ? guide.practiceTasks.map((task, index) =>
+            [
+              `${index + 1}. ${task.title}`,
+              `Objective: ${task.objective}`,
+              `Tool: ${task.tool}`,
+              `Output: ${task.output}`,
+            ].join('\n'),
+          )
+        : [guide.practiceTask]),
       '',
-      'Capture template:',
+      'Evidence template:',
       guide.captureTemplate,
     ].join('\n');
     const trace = createModelCallTrace({
@@ -286,6 +440,7 @@ export async function sendLearningResourceToCaptureApi(resourceId: string) {
         [guide.capabilityId],
       ),
       modelTraces: [trace, ...current.modelTraces],
+      usageLogs: [createUsageLogFromTrace(trace), ...current.usageLogs],
     };
   });
 }
@@ -300,7 +455,7 @@ export async function sendCoachStepToCaptureApi(stepId: string) {
       '',
       step.detail,
       '',
-      'My practice notes:',
+      'My evidence record:',
     ].join('\n');
     const trace = createModelCallTrace({
       agent: 'Coach Agent',
@@ -320,6 +475,7 @@ export async function sendCoachStepToCaptureApi(stepId: string) {
         ),
       },
       modelTraces: [trace, ...current.modelTraces],
+      usageLogs: [createUsageLogFromTrace(trace), ...current.usageLogs],
     };
   });
 }
@@ -351,6 +507,7 @@ export async function sendCapabilityToCaptureApi(capabilityId: string) {
       captureDraft: nextDraft,
       captureSuggestions: inferCaptureSuggestions(nextDraft, current.capabilities),
       modelTraces: [trace, ...current.modelTraces],
+      usageLogs: [createUsageLogFromTrace(trace), ...current.usageLogs],
       selectedCapabilityId: capabilityId,
     };
   });
@@ -413,6 +570,7 @@ export async function generateReflectionDraftApi() {
       ...current,
       reflectionDraft,
       modelTraces: [trace, ...current.modelTraces],
+      usageLogs: [createUsageLogFromTrace(trace), ...current.usageLogs],
     };
   });
 }
@@ -439,6 +597,7 @@ export async function clearModelTracesApi() {
   return updateWorkspace((current) => ({
     ...current,
     modelTraces: [],
+    usageLogs: [],
   }));
 }
 
@@ -475,6 +634,8 @@ function readWorkspace(): WorkspaceState {
     return memoryWorkspace;
   }
 
+  applyWorkspaceResetOnce(storage);
+
   const raw = storage.getItem(STORAGE_KEY);
 
   if (!raw) {
@@ -490,6 +651,13 @@ function readWorkspace(): WorkspaceState {
     storage.setItem(STORAGE_KEY, JSON.stringify(workspace));
     return workspace;
   }
+}
+
+function applyWorkspaceResetOnce(storage: Storage) {
+  if (storage.getItem(WORKSPACE_RESET_KEY) === 'done') return;
+
+  storage.removeItem(STORAGE_KEY);
+  storage.setItem(WORKSPACE_RESET_KEY, 'done');
 }
 
 function writeWorkspace(workspace: WorkspaceState): WorkspaceState {
@@ -526,6 +694,7 @@ function createInitialWorkspace(): WorkspaceState {
     reflectionDraft: '',
     selectedCapabilityId: capabilities[0]?.id ?? '',
     toolConnectors: clone(initialToolConnectors),
+    usageLogs: [],
     weeklySummary: clone(weeklySummary),
     userProfile: clone(userProfile),
     updatedAt: new Date().toISOString(),
@@ -538,18 +707,151 @@ function normalizeWorkspace(workspace: Partial<WorkspaceState>): WorkspaceState 
   return {
     ...initial,
     ...workspace,
-    capabilities: workspace.capabilities ?? initial.capabilities,
+    capabilities: mergeCapabilities(workspace.capabilities, initial.capabilities),
     captureSuggestions: workspace.captureSuggestions ?? initial.captureSuggestions,
     coachPlan: workspace.coachPlan ?? initial.coachPlan,
     modelTraces: workspace.modelTraces ?? [],
     notes: workspace.notes ?? [],
     toolConnectors: mergeToolConnectors(workspace.toolConnectors, initial.toolConnectors),
+    usageLogs: normalizeUsageLogs(workspace.usageLogs, workspace.modelTraces, initial.userProfile),
     weeklySummary: workspace.weeklySummary ?? initial.weeklySummary,
     userProfile: {
       ...initial.userProfile,
       ...(workspace.userProfile ?? {}),
     },
   };
+}
+
+function normalizeUsageLogs(
+  usageLogs: UsageLog[] | undefined,
+  traces: ModelCallTrace[] | undefined,
+  fallbackUser: UserProfile,
+): UsageLog[] {
+  if (usageLogs) {
+    return usageLogs.map((log) => normalizeUsageLog(log, fallbackUser));
+  }
+
+  return (traces ?? []).map((trace) =>
+    createUsageLogFromTrace(trace, fallbackUser.focusArea || 'local-user'),
+  );
+}
+
+function normalizeUsageLog(log: UsageLog, fallbackUser: UserProfile): UsageLog {
+  const legacyLog = log as UsageLog & {
+    userId?: string;
+    promptTokens?: number;
+    completionTokens?: number;
+    createdAt?: string;
+  };
+
+  return {
+    id: log.id,
+    user_id: log.user_id ?? legacyLog.userId ?? fallbackUser.focusArea ?? 'local-user',
+    feature: log.feature ?? 'unknown_feature',
+    model: log.model ?? 'unknown_model',
+    prompt_tokens: log.prompt_tokens ?? legacyLog.promptTokens ?? 0,
+    completion_tokens: log.completion_tokens ?? legacyLog.completionTokens ?? 0,
+    cost: log.cost ?? 0,
+    latency: log.latency ?? 0,
+    created_at: log.created_at ?? legacyLog.createdAt ?? new Date().toISOString(),
+  };
+}
+
+function mergeUsageLogs(existing: UsageLog[] = [], incoming: UsageLog[] = []) {
+  const byId = new Map<string, UsageLog>();
+
+  for (const log of [...incoming, ...existing]) {
+    byId.set(log.id, normalizeUsageLog(log, userProfile));
+  }
+
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+}
+
+function mergeCapabilities(
+  existing: Capability[] | undefined,
+  latest: Capability[] = [],
+): Capability[] {
+  if (!existing) {
+    return latest;
+  }
+
+  const existingById = new Map(existing.map((capability) => [capability.id, capability]));
+
+  return latest.map((capability) => ({
+    ...capability,
+    ...(existingById.get(capability.id) ?? {}),
+  }));
+}
+
+function getUsageLogEndpoints() {
+  const endpoints = new Set<string>();
+  const configuredBaseUrl = getViteEnv('VITE_API_URL')?.replace(/\/$/, '');
+
+  if (isLocalBrowser()) {
+    endpoints.add('http://127.0.0.1:8787/api/usage-logs');
+    endpoints.add('http://localhost:8787/api/usage-logs');
+  }
+
+  if (configuredBaseUrl) {
+    endpoints.add(`${configuredBaseUrl}/api/usage-logs`);
+  }
+
+  endpoints.add('/api/usage-logs');
+
+  return [...endpoints];
+}
+
+async function readJsonResponse<T>(response: Response, endpoint: string): Promise<T> {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (error) {
+    throw new Error(formatNonJsonApiResponse(endpoint, text, error));
+  }
+}
+
+function formatNonJsonApiResponse(endpoint: string, text: string, error: unknown) {
+  const preview = text.trim().slice(0, 80);
+  const parserMessage = error instanceof Error ? error.message : String(error);
+  const looksLikeSource = /^import\s|\bexport\s+default\b/.test(preview);
+  const looksLikeHtml = /^<!doctype html|^<html/i.test(preview);
+
+  if (looksLikeSource || looksLikeHtml) {
+    return [
+      `Usage Bridge returned a non-JSON response at ${endpoint}.`,
+      'The frontend is reaching a static file or app fallback instead of the API handler.',
+      'For local development, run npm run dev:api or use vercel dev, then click Sync Bridge again.',
+    ].join(' ');
+  }
+
+  return `Usage Bridge returned invalid JSON at ${endpoint}. ${parserMessage}`;
+}
+
+function formatUsageBridgeError(error: unknown, endpoint: string) {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+
+  if (/failed to fetch|networkerror|load failed|connection refused/i.test(message)) {
+    return [
+      'Usage Bridge is unavailable.',
+      'For local development, run npm run dev:api and click Sync Bridge again.',
+      'For production, deploy /api/usage-logs and configure Supabase environment variables.',
+    ].join(' ');
+  }
+
+  return `Usage Bridge sync failed at ${endpoint}. ${message || 'Check the gateway configuration.'}`;
+}
+
+function getViteEnv(key: string): string | undefined {
+  return (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[key];
+}
+
+function isLocalBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+
+  return ['localhost', '127.0.0.1'].includes(window.location.hostname);
 }
 
 function mergeToolConnectors(

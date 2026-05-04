@@ -1,5 +1,6 @@
 import { SectionCard } from '../../components/ui/SectionCard';
 import { formatUsd, summarizeModelCalls } from '../../lib/model-telemetry';
+import { notify } from '../../lib/notifications';
 import { useAppStore } from '../../store/app-store';
 
 export function TelemetryPanel() {
@@ -14,6 +15,7 @@ export function TelemetryPanel() {
       subtitle="Model call tracking"
       actionLabel="Clear"
       actionDisabled={traces.length === 0}
+      actionVariant="danger"
       onAction={clearModelTraces}
     >
       <div className="stack-sm">
@@ -61,7 +63,7 @@ export function TelemetryPanel() {
             ))
           ) : (
             <p className="muted-text">
-              Traces will appear after saving notes, generating tasks, or creating reviews.
+              Traces will appear after saving evidence, generating tasks, or creating reviews.
             </p>
           )}
         </div>
@@ -79,4 +81,5 @@ function downloadJson(content: string) {
   link.download = `pm-growth-model-traces-${new Date().toISOString().slice(0, 10)}.json`;
   link.click();
   URL.revokeObjectURL(url);
+  notify('Model traces exported.', 'success');
 }
