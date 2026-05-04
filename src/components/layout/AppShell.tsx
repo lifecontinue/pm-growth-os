@@ -7,44 +7,47 @@ type AppShellProps = {
 
 export function AppShell({ children }: AppShellProps) {
   const backendError = useAppStore((state) => state.backendError);
-  const isBackendReady = useAppStore((state) => state.isBackendReady);
   const user = useAppStore((state) => state.userProfile);
-  const weeklyProgress = Math.min(
-    100,
-    Math.round((user.savedNotes / Math.max(user.weeklyGoal, 1)) * 100),
-  );
 
   return (
     <div className="app-shell">
       <div className="hero-backdrop" />
       <header className="hero">
-        <div>
-          <p className="eyebrow">AI PM Growth Workspace</p>
+        <div className="hero-left">
+          <div className="hero-badge">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+            <span>AI PM Growth System</span>
+          </div>
           <h1>PM Growth OS</h1>
           <p className="hero-copy">
-            把记录、探索、总结和画像更新串成一个可持续运行的 Agent 工作流。
+            Capture your AI product work, track capability growth, and generate periodic reflections.
           </p>
-          <div className="hero-tags">
-            <span className="chip">记录</span>
-            <span className="chip">探索</span>
-            <span className="chip">总结</span>
-            <span className="chip">成长</span>
-          </div>
         </div>
-        <div className="hero-summary">
-          <span className="hero-summary-label">当前成长阶段</span>
-          <strong>{user.currentStageLabel}</strong>
-          <div className="hero-progress">
-            <div className="mini-progress-bar">
-              <span style={{ width: `${weeklyProgress}%` }} />
+        <div className="hero-right">
+          <div className="growth-stats">
+            <div className="stat-item">
+              <span className="stat-value">{user.savedNotes}</span>
+              <span className="stat-label">Notes</span>
             </div>
-            <span>
-              {user.savedNotes} / {user.weeklyGoal} 条
-            </span>
+            <div className="stat-item">
+              <span className="stat-value">{user.weeklyGoal}</span>
+              <span className="stat-label">Weekly Goal</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-value">{user.focusArea}</span>
+              <span className="stat-label">Focus Area</span>
+            </div>
           </div>
-          <span className={isBackendReady ? 'backend-pill backend-ready' : 'backend-pill'}>
-            {isBackendReady ? '本地存储已就绪' : '本地存储不可用'}
-          </span>
+          <div className="hero-tagline">{user.currentStageLabel}</div>
         </div>
       </header>
       {backendError ? <div className="backend-alert">{backendError}</div> : null}

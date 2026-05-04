@@ -37,9 +37,43 @@ export type CoachStep = {
   status: 'todo' | 'active' | 'done';
 };
 
+export type LearningResourceType =
+  | 'official'
+  | 'framework'
+  | 'tutorial'
+  | 'case-study'
+  | 'paper'
+  | 'tool';
+
+export type LearningResource = {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  resourceType: LearningResourceType;
+  summary: string;
+  whyUseful: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  estimatedMinutes: number;
+};
+
+export type LearningGuide = {
+  capabilityId: string;
+  capabilityName: string;
+  concept: string;
+  whyNow: string;
+  learningPath: string[];
+  resources: LearningResource[];
+  practiceTask: string;
+  reflectionPrompt: string;
+  captureTemplate: string;
+  nextStep: string;
+};
+
 export type CoachPlan = {
   description: string;
   steps: CoachStep[];
+  learningGuide?: LearningGuide;
 };
 
 export type WeeklySummary = {
@@ -60,7 +94,12 @@ export type UserProfile = {
 
 export type ModelCallTrace = {
   id: string;
-  agent: 'Capture Agent' | 'Coach Agent' | 'Reflection Agent' | 'Profile Agent';
+  agent:
+    | 'Capture Agent'
+    | 'Coach Agent'
+    | 'Knowledge Tool'
+    | 'Reflection Agent'
+    | 'Profile Agent';
   operation: string;
   model: string;
   promptTokens: number;

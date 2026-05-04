@@ -11,8 +11,8 @@ export function TelemetryPanel() {
   return (
     <SectionCard
       title="Cost Monitor"
-      subtitle="模型调用追踪"
-      actionLabel="清空"
+      subtitle="Model call tracking"
+      actionLabel="Clear"
       actionDisabled={traces.length === 0}
       onAction={clearModelTraces}
     >
@@ -20,7 +20,7 @@ export function TelemetryPanel() {
         <div className="telemetry-grid">
           <div className="telemetry-metric">
             <strong>{summary.totalCalls}</strong>
-            <span>调用次数</span>
+            <span>Calls</span>
           </div>
           <div className="telemetry-metric">
             <strong>{summary.totalTokens}</strong>
@@ -28,7 +28,7 @@ export function TelemetryPanel() {
           </div>
           <div className="telemetry-metric">
             <strong>{formatUsd(summary.estimatedCostUsd)}</strong>
-            <span>估算成本</span>
+            <span>Estimated cost</span>
           </div>
         </div>
         <div className="token-split">
@@ -37,13 +37,13 @@ export function TelemetryPanel() {
         </div>
         <div className="trace-list">
           <div className="section-inline-header">
-            <strong>最近调用</strong>
+            <strong>Recent Calls</strong>
             <button
               className="text-button"
               disabled={traces.length === 0}
               onClick={() => downloadJson(exportModelTraces())}
             >
-              导出 JSON
+              Export JSON
             </button>
           </div>
           {traces.length > 0 ? (
@@ -60,7 +60,9 @@ export function TelemetryPanel() {
               </article>
             ))
           ) : (
-            <p className="muted-text">执行保存记录、生成探索或生成周报后会出现 trace。</p>
+            <p className="muted-text">
+              Traces will appear after saving notes, generating tasks, or creating reviews.
+            </p>
           )}
         </div>
       </div>

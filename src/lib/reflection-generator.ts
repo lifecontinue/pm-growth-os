@@ -28,7 +28,7 @@ export function generateWeeklyMarkdown({
     activeCapabilities.length > 0
       ? activeCapabilities.map(
           (capability) =>
-            `${capability.name}: ${capability.progress}% 进度，累计 ${capability.evidenceCount} 条证据`,
+            `${capability.name}: ${capability.progress}% progress, ${capability.evidenceCount} evidence notes`,
         )
       : capabilities
           .slice()
@@ -40,25 +40,25 @@ export function generateWeeklyMarkdown({
     recentNotes.length > 0
       ? [
           userProfile.lastInsight,
-          `围绕 ${userProfile.focusArea} 再补 2 条真实工作记录`,
-          '把本周最有价值的一条记录整理成可复用案例',
+          `Add two more real work notes around ${userProfile.focusArea}.`,
+          'Turn the most valuable note this week into a reusable case study.',
         ]
       : weeklySummary.nextActions;
 
   return [
-    `# ${period} 周报`,
+    `# ${period} Weekly Reflection`,
     '',
-    '## 本周进展',
+    '## Progress This Week',
     ...progressItems.map((item, index) => `${index + 1}. ${item}`),
     '',
-    '## 能力变化',
+    '## Capability Changes',
     ...capabilityItems.map((item, index) => `${index + 1}. ${item}`),
     '',
-    '## 下周计划',
+    '## Plan for Next Week',
     ...nextActions.map((item, index) => `${index + 1}. ${item}`),
     '',
-    '## 反思',
-    `本周重点集中在 ${userProfile.focusArea}。下一步需要把零散记录进一步沉淀为明确的能力证据和可复用方法。`,
+    '## Reflection',
+    `This week centered on ${userProfile.focusArea}. Next, convert scattered notes into clear capability evidence and reusable methods.`,
   ].join('\n');
 }
 
@@ -74,9 +74,8 @@ function summarizeNote(content: string) {
 
 function getCurrentWeekLabel() {
   const now = new Date();
-  const month = now.getMonth() + 1;
-  const day = now.getDate();
-  const weekOfMonth = Math.ceil(day / 7);
+  const month = now.toLocaleString('en-US', { month: 'long' });
+  const weekOfMonth = Math.ceil(now.getDate() / 7);
 
-  return `${now.getFullYear()} 年 ${month} 月第 ${weekOfMonth} 周`;
+  return `${month} ${now.getFullYear()}, Week ${weekOfMonth}`;
 }

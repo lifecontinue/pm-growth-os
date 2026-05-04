@@ -12,14 +12,10 @@ export function ToolConnectorsPanel() {
   ).length;
 
   return (
-    <SectionCard
-      title="Tool Connectors"
-      subtitle="MCP / 账号连接"
-      actionLabel="刷新状态"
-    >
+    <SectionCard title="Tool Connectors" subtitle="MCP / account connections" actionLabel="Refresh">
       <div className="stack-sm">
         <div className="section-inline-header">
-          <strong>平台能力</strong>
+          <strong>Platform Capabilities</strong>
           <span className="muted-text">
             {connectedCount}/{connectors.length} configured
           </span>
@@ -34,7 +30,7 @@ export function ToolConnectorsPanel() {
           ))}
         </div>
         <div className="section-inline-header">
-          <strong>可选个人连接</strong>
+          <strong>Optional User Connections</strong>
           <span className="muted-text">{userConnectors.length} integrations</span>
         </div>
         <div className="connector-list">
@@ -83,7 +79,7 @@ function ConnectorCard({
       </div>
       <p>{connector.description}</p>
       <div className="connector-field">
-        <strong>{isPlatform ? '上线前由平台配置' : '用户可选提供'}</strong>
+        <strong>{isPlatform ? 'Configured by the platform' : 'Optional user-provided setup'}</strong>
         <span>{connector.requiredInputs.join(' / ')}</span>
       </div>
       <div className="tag-row">
@@ -97,7 +93,7 @@ function ConnectorCard({
         <input
           className="library-input"
           value={connector.mcpEndpoint ?? ''}
-          placeholder="MCP server URL，由平台配置"
+          placeholder="MCP server URL, configured by the platform"
           onChange={(event) =>
             updateConnector(connector.id, {
               enabled: Boolean(event.target.value.trim()),
@@ -119,7 +115,7 @@ function ConnectorCard({
               })
             }
           >
-            请求连接
+            Request Connection
           </button>
           <button
             className="text-button danger-text"
@@ -130,7 +126,7 @@ function ConnectorCard({
               })
             }
           >
-            暂停
+            Pause
           </button>
         </div>
       ) : null}

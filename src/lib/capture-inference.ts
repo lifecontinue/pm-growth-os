@@ -1,31 +1,25 @@
 import type { Capability, CaptureSuggestions } from '../types/domain';
 
-type KeywordRule = {
-  capabilityId: string;
-  tags: string[];
-  keywords: string[];
-};
-
-const rules: KeywordRule[] = [
+const rules = [
   {
     capabilityId: 'prompt-engineering',
     tags: ['PromptEngineering'],
-    keywords: ['prompt', '提示词', 'few-shot', 'chain-of-thought', 'cot', '约束'],
+    keywords: ['prompt', 'few-shot', 'chain-of-thought', 'cot', 'constraint', 'instruction'],
   },
   {
     capabilityId: 'context-engineering',
     tags: ['ContextEngineering', 'Memory'],
-    keywords: ['context', '上下文', '记忆', '状态', '压缩', '窗口', '长期记忆'],
+    keywords: ['context', 'memory', 'state', 'compression', 'window', 'long-term memory'],
   },
   {
     capabilityId: 'agent-design',
     tags: ['AgentDesign', 'Workflow'],
-    keywords: ['agent', 'handoff', '工作流', '编排', '工具调用', 'profile', 'capture'],
+    keywords: ['agent', 'handoff', 'workflow', 'orchestration', 'tool call', 'profile', 'capture'],
   },
   {
     capabilityId: 'ai-evaluation',
     tags: ['Evaluation', 'Guardrails'],
-    keywords: ['评测', 'eval', '指标', '观测', 'trace', 'guardrail', '护栏', '质量'],
+    keywords: ['evaluation', 'eval', 'metric', 'observability', 'trace', 'guardrail', 'quality'],
   },
 ];
 
@@ -48,9 +42,8 @@ export function inferCaptureSuggestions(
     }
   }
 
-  const fallbackId = 'agent-design';
   if (draft.trim().length > 0 && matchedRuleIds.size === 0) {
-    matchedRuleIds.add(fallbackId);
+    matchedRuleIds.add('agent-design');
     tags.add('Reflection');
   }
 
@@ -71,34 +64,28 @@ export function inferCaptureSuggestions(
 }
 
 function getConfidence(draft: string, matchCount: number): CaptureSuggestions['confidence'] {
-  if (draft.trim().length < 12 || matchCount === 0) {
-    return 'low';
-  }
-
-  if (matchCount === 1) {
-    return 'medium';
-  }
-
+  if (draft.trim().length < 12 || matchCount === 0) return 'low';
+  if (matchCount === 1) return 'medium';
   return 'high';
 }
 
 function getReason(capabilityId: string) {
   const reasons: Record<string, string> = {
-    'prompt-engineering': '记录中出现了提示词、约束或示例学习相关线索。',
-    'context-engineering': '记录中出现了上下文、状态或记忆管理相关线索。',
-    'agent-design': '记录中出现了 Agent、角色协作或工作流相关线索。',
-    'ai-evaluation': '记录中出现了评测、观测或质量护栏相关线索。',
+    'prompt-engineering': 'This note mentions prompting, constraints, or examples.',
+    'context-engineering': 'This note mentions context, state, or memory management.',
+    'agent-design': 'This note mentions agents, handoffs, roles, or workflow design.',
+    'ai-evaluation': 'This note mentions evaluation, observability, metrics, or guardrails.',
   };
 
-  return reasons[capabilityId] ?? '这条记录可以沉淀为一个新的成长证据。';
+  return reasons[capabilityId] ?? 'This note can become a new piece of growth evidence.';
 }
 
 function getNextPrompt(capabilityId?: string) {
   const prompts: Record<string, string> = {
-    'prompt-engineering': '下一步可以补一条「什么输入让 Prompt 失效」的反例记录。',
-    'context-engineering': '下一步可以写清楚哪些状态需要进长期记忆，哪些只留在会话里。',
-    'agent-design': '下一步可以画出 Capture 到 Profile 的 handoff 输入输出。',
-    'ai-evaluation': '下一步可以定义一个判断输出好坏的最小指标。',
+    'prompt-engineering': 'Next, capture one counterexample where a prompt failed and why.',
+    'context-engineering': 'Next, separate what should become long-term memory from what can stay in the current session.',
+    'agent-design': 'Next, map the handoff inputs and outputs between Capture and Profile.',
+    'ai-evaluation': 'Next, define one minimal metric that tells whether the output is good enough.',
   };
 
   return prompts[capabilityId ?? 'agent-design'];

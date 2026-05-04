@@ -7,8 +7,10 @@ import {
 } from '../components/layout/WorkspaceFrame';
 import { CoachPanel } from '../features/coach/CoachPanel';
 import { CapturePanel } from '../features/capture/CapturePanel';
+import { DevBoardPanel } from '../features/dev/DevBoardPanel';
 import { NotesLibraryPanel } from '../features/notes/NotesLibraryPanel';
 import { CapabilityDetailPanel } from '../features/outline/CapabilityDetailPanel';
+import { GrowthSummaryPanel } from '../features/outline/GrowthSummaryPanel';
 import { OutlineOverview } from '../features/outline/OutlineOverview';
 import { ProfilePanel } from '../features/profile/ProfilePanel';
 import { ReflectionPanel } from '../features/reflection/ReflectionPanel';
@@ -46,6 +48,7 @@ function renderView(view: WorkspaceView) {
     case 'growth':
       return (
         <div className="view-stack">
+          <GrowthSummaryPanel />
           <OutlineOverview />
           <CapabilityDetailPanel />
           <CoachPanel />
@@ -55,6 +58,8 @@ function renderView(view: WorkspaceView) {
       return <NotesLibraryPanel />;
     case 'reflection':
       return <ReflectionPanel />;
+    case 'dev':
+      return <DevBoardPanel />;
     case 'system':
       return (
         <div className="content-grid">

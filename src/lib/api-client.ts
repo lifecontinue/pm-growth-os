@@ -1,4 +1,4 @@
-import { generateCoachPlan } from './coach-generator';
+import { generateCoachPlan } from './coach-generator-enhanced';
 import { inferCaptureSuggestions } from './capture-inference';
 import {
   capabilities,
@@ -10,7 +10,13 @@ import {
 } from './mock-data';
 import { createModelCallTrace } from './model-telemetry';
 import { generateWeeklyMarkdown } from './reflection-generator';
-import type { ToolConnector, WorkspaceState } from '../types/domain';
+import type {
+  Capability,
+  CaptureSuggestions,
+  ToolConnector,
+  UserProfile,
+  WorkspaceState,
+} from '../types/domain';
 
 const STORAGE_KEY = 'pm-growth-os.workspace.v1';
 
@@ -45,6 +51,22 @@ const initialToolConnectors: ToolConnector[] = [
     description: 'Persists notes, growth state, reflection drafts, and traces in this browser.',
     useCases: ['Offline usage', 'Static Vercel deployment', 'Private local workspace'],
     requiredInputs: ['No setup required'],
+    enabled: true,
+  },
+  {
+    id: 'web-search',
+    name: 'Real Web Search Knowledge Tool',
+    category: 'knowledge',
+    method: 'mcp',
+    status: 'enabled',
+    scope: 'platform',
+    description:
+      'Calls the platform search API to retrieve current learning resources, then structures them for Coach Agent guidance.',
+    useCases: ['Learning resources', 'Guided practice', 'Future MCP web search adapter'],
+    requiredInputs: ['Platform search API key'],
+    mcpEndpoint: '/api/knowledge-search',
+    accountHint:
+      'Set TAVILY_API_KEY, BRAVE_SEARCH_API_KEY, or SERPAPI_API_KEY in the deployment environment. Users do not need to configure anything.',
     enabled: true,
   },
   {
@@ -98,7 +120,7 @@ export async function resetWorkspaceApi() {
   return writeWorkspace(workspace);
 }
 
-export async function createNoteApi(content: string) {
+export async function createNoteApi(content: string, selectedCapabilityIds?: string[]) {
   const normalizedContent = content.trim();
 
   if (!normalizedContent) {
@@ -106,7 +128,11 @@ export async function createNoteApi(content: string) {
   }
 
   return updateWorkspace((current) => {
-    const suggestions = inferCaptureSuggestions(normalizedContent, current.capabilities);
+    const inferredSuggestions = inferCaptureSuggestions(normalizedContent, current.capabilities);
+    const suggestions =
+      selectedCapabilityIds === undefined
+        ? inferredSuggestions
+        : buildAdjustedSuggestions(inferredSuggestions, current.capabilities, selectedCapabilityIds);
     const now = new Date().toISOString();
     const trace = createModelCallTrace({
       agent: 'Capture Agent',
@@ -179,15 +205,15 @@ export async function deleteNoteApi(noteId: string) {
 }
 
 export async function generateCoachPlanApi(capabilityId?: string) {
-  return updateWorkspace((current) => {
-    const nextPlan = generateCoachPlan({
+  return updateWorkspace(async (current) => {
+    const nextPlan = await generateCoachPlan({
       capabilities: current.capabilities,
       notes: current.notes,
       targetCapabilityId: capabilityId,
       userProfile: current.userProfile,
     });
     const targetCapability = current.capabilities.find((item) => item.id === capabilityId);
-    const trace = createModelCallTrace({
+    const coachTrace = createModelCallTrace({
       agent: 'Coach Agent',
       operation: capabilityId ? 'generate_capability_coach_plan' : 'generate_coach_plan',
       prompt: JSON.stringify({
@@ -198,17 +224,68 @@ export async function generateCoachPlanApi(capabilityId?: string) {
       }),
       completion: JSON.stringify(nextPlan),
     });
+    const knowledgeTrace = createModelCallTrace({
+      agent: 'Knowledge Tool',
+      operation: 'enrich_learning_resources',
+      prompt: JSON.stringify({
+        capabilityId: nextPlan.learningGuide?.capabilityId,
+        focusArea: current.userProfile.focusArea,
+      }),
+      completion: JSON.stringify(nextPlan.learningGuide?.resources ?? []),
+    });
 
     return {
       ...current,
       coachPlan: nextPlan,
-      modelTraces: [trace, ...current.modelTraces],
+      modelTraces: [knowledgeTrace, coachTrace, ...current.modelTraces],
       selectedCapabilityId: capabilityId ?? current.selectedCapabilityId,
       userProfile: {
         ...current.userProfile,
         focusArea: targetCapability?.name ?? current.userProfile.focusArea,
-        lastInsight: nextPlan.steps[0]?.detail ?? current.userProfile.lastInsight,
+        lastInsight: nextPlan.learningGuide?.nextStep ?? current.userProfile.lastInsight,
       },
+    };
+  });
+}
+
+export async function sendLearningResourceToCaptureApi(resourceId: string) {
+  return updateWorkspace((current) => {
+    const guide = current.coachPlan.learningGuide;
+    const resource = guide?.resources.find((item) => item.id === resourceId);
+
+    if (!guide || !resource) return current;
+
+    const nextDraft = [
+      `Learning resource: ${resource.title}`,
+      '',
+      `Capability: ${guide.capabilityName}`,
+      `Resource type: ${resource.resourceType}`,
+      `URL: ${resource.url}`,
+      '',
+      `Why this matters: ${resource.whyUseful}`,
+      '',
+      'Practice task:',
+      guide.practiceTask,
+      '',
+      'Capture template:',
+      guide.captureTemplate,
+    ].join('\n');
+    const trace = createModelCallTrace({
+      agent: 'Knowledge Tool',
+      operation: 'handoff_resource_to_capture',
+      prompt: JSON.stringify(resource),
+      completion: nextDraft,
+    });
+
+    return {
+      ...current,
+      captureDraft: nextDraft,
+      captureSuggestions: buildAdjustedSuggestions(
+        inferCaptureSuggestions(nextDraft, current.capabilities),
+        current.capabilities,
+        [guide.capabilityId],
+      ),
+      modelTraces: [trace, ...current.modelTraces],
     };
   });
 }
@@ -219,11 +296,11 @@ export async function sendCoachStepToCaptureApi(stepId: string) {
     if (!step) return current;
 
     const nextDraft = [
-      `探索任务：${step.title}`,
+      `Practice task: ${step.title}`,
       '',
       step.detail,
       '',
-      '我的实践记录：',
+      'My practice notes:',
     ].join('\n');
     const trace = createModelCallTrace({
       agent: 'Coach Agent',
@@ -253,14 +330,14 @@ export async function sendCapabilityToCaptureApi(capabilityId: string) {
     if (!capability) return current;
 
     const nextDraft = [
-      `能力探索：${capability.name}`,
+      `Capability exploration: ${capability.name}`,
       '',
-      `当前阶段：${capability.stageLabel}`,
-      `当前进度：${capability.progress}%`,
+      `Current stage: ${capability.stageLabel}`,
+      `Current progress: ${capability.progress}%`,
       '',
-      '我今天遇到的真实场景：',
+      'Real scenario I encountered today:',
       '',
-      '我想验证的问题：',
+      'Question I want to validate:',
     ].join('\n');
     const trace = createModelCallTrace({
       agent: 'Profile Agent',
@@ -307,6 +384,17 @@ export async function updateCaptureDraftApi(draft: string) {
   }));
 }
 
+export async function updateCaptureCapabilityLinksApi(capabilityIds: string[]) {
+  return updateWorkspace((current) => ({
+    ...current,
+    captureSuggestions: buildAdjustedSuggestions(
+      current.captureSuggestions,
+      current.capabilities,
+      capabilityIds,
+    ),
+  }));
+}
+
 export async function generateReflectionDraftApi() {
   return updateWorkspace((current) => {
     const reflectionDraft = generateWeeklyMarkdown(current);
@@ -333,6 +421,17 @@ export async function updateReflectionDraftApi(draft: string) {
   return updateWorkspace((current) => ({
     ...current,
     reflectionDraft: draft,
+  }));
+}
+
+export async function updateUserProfileApi(patch: Partial<UserProfile>) {
+  return updateWorkspace((current) => ({
+    ...current,
+    userProfile: {
+      ...current.userProfile,
+      ...patch,
+      weeklyGoal: normalizeWeeklyGoal(patch.weeklyGoal, current.userProfile.weeklyGoal),
+    },
   }));
 }
 
@@ -409,9 +508,11 @@ function writeWorkspace(workspace: WorkspaceState): WorkspaceState {
   return nextWorkspace;
 }
 
-function updateWorkspace(updater: (workspace: WorkspaceState) => WorkspaceState) {
+async function updateWorkspace(
+  updater: (workspace: WorkspaceState) => WorkspaceState | Promise<WorkspaceState>,
+) {
   const current = readWorkspace();
-  return writeWorkspace(updater(current));
+  return writeWorkspace(await updater(current));
 }
 
 function createInitialWorkspace(): WorkspaceState {
@@ -486,10 +587,44 @@ function getStorage() {
 }
 
 function getStageLabel(progress: number) {
-  if (progress >= 75) return '精通冲刺';
-  if (progress >= 45) return '进阶';
-  if (progress > 0) return '入门';
-  return '未探索';
+  if (progress >= 75) return 'Mastery Sprint';
+  if (progress >= 45) return 'Advancing';
+  if (progress > 0) return 'Foundational';
+  return 'Unexplored';
+}
+
+function buildAdjustedSuggestions(
+  current: CaptureSuggestions,
+  capabilities: Capability[],
+  capabilityIds: string[],
+): CaptureSuggestions {
+  const selectedIds = new Set(capabilityIds);
+  const relatedCapabilities = capabilities
+    .filter((capability) => selectedIds.has(capability.id))
+    .map((capability) => {
+      const existing = current.relatedCapabilities.find((item) => item.id === capability.id);
+
+      return {
+        id: capability.id,
+        name: capability.name,
+        reason: existing?.reason ?? 'Manually linked by the user.',
+      };
+    });
+
+  return {
+    ...current,
+    relatedCapabilities,
+    confidence:
+      relatedCapabilities.length === 0 ? 'low' : relatedCapabilities.length === 1 ? 'medium' : 'high',
+  };
+}
+
+function normalizeWeeklyGoal(nextValue: number | undefined, currentValue: number) {
+  if (typeof nextValue !== 'number' || Number.isNaN(nextValue)) {
+    return currentValue;
+  }
+
+  return Math.max(1, Math.round(nextValue));
 }
 
 function createId() {

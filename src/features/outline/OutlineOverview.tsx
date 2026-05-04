@@ -15,19 +15,19 @@ export function OutlineOverview() {
     <SectionCard
       title="Skill Graph"
       subtitle="Progress Tracker"
-      actionLabel="聚焦弱项"
+      actionLabel="Focus Weakest Area"
       onAction={() => selectCapability(weakestCapability.id)}
     >
       <div className="outline-header">
         <div>
           <strong>{overallProgress}%</strong>
-          <span>整体进度</span>
+          <span>Overall progress</span>
         </div>
         <div>
           <strong>
             {exploredCount}/{capabilities.length}
           </strong>
-          <span>已激活维度</span>
+          <span>Active dimensions</span>
         </div>
       </div>
       <div className="capability-grid">
@@ -36,6 +36,7 @@ export function OutlineOverview() {
             className={`capability-card capability-card-button ${
               selectedCapabilityId === capability.id ? 'capability-card-selected' : ''
             }`}
+            data-category={capability.category}
             key={capability.id}
             onClick={() => selectCapability(capability.id)}
           >
@@ -50,7 +51,7 @@ export function OutlineOverview() {
             </div>
             <div className="capability-meta">
               <small>{capability.stageLabel}</small>
-              <small>{capability.evidenceCount} 条证据</small>
+              <small>{capability.evidenceCount} evidence notes</small>
               <small>{capability.updatedAt}</small>
             </div>
           </button>

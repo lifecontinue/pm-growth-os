@@ -14,16 +14,17 @@ export function NotesLibraryPanel() {
   const capabilityNameById = new Map(
     capabilities.map((capability) => [capability.id, capability.name]),
   );
-  const filteredNotes = notes.filter((note) =>
-    matchesQuery(note, query) &&
-    (capabilityFilter === 'all' || note.relatedCapabilityIds.includes(capabilityFilter)),
+  const filteredNotes = notes.filter(
+    (note) =>
+      matchesQuery(note, query) &&
+      (capabilityFilter === 'all' || note.relatedCapabilityIds.includes(capabilityFilter)),
   );
 
   return (
     <SectionCard
       title="Notes Library"
-      subtitle="记录检索"
-      actionLabel="导出 Markdown"
+      subtitle="Search and reuse"
+      actionLabel="Export Markdown"
       actionDisabled={notes.length === 0}
       onAction={() => downloadMarkdown(exportNotesMarkdown())}
     >
@@ -32,7 +33,7 @@ export function NotesLibraryPanel() {
           <input
             className="library-input"
             value={query}
-            placeholder="搜索内容、标签或能力维度"
+            placeholder="Search content, tags, or capabilities"
             onChange={(event) => setQuery(event.target.value)}
           />
           <select
@@ -40,7 +41,7 @@ export function NotesLibraryPanel() {
             value={capabilityFilter}
             onChange={(event) => setCapabilityFilter(event.target.value)}
           >
-            <option value="all">全部能力</option>
+            <option value="all">All capabilities</option>
             {capabilities.map((capability) => (
               <option key={capability.id} value={capability.id}>
                 {capability.name}
@@ -49,9 +50,9 @@ export function NotesLibraryPanel() {
           </select>
         </div>
         <div className="section-inline-header">
-          <strong>检索结果</strong>
+          <strong>Search Results</strong>
           <span className="muted-text">
-            {filteredNotes.length}/{notes.length} 条
+            {filteredNotes.length}/{notes.length} notes
           </span>
         </div>
         {filteredNotes.length > 0 ? (
@@ -59,7 +60,7 @@ export function NotesLibraryPanel() {
             {filteredNotes.map((note) => (
               <article className="library-note" key={note.id}>
                 <div className="section-inline-header">
-                  <strong>{new Date(note.createdAt).toLocaleString('zh-CN')}</strong>
+                  <strong>{new Date(note.createdAt).toLocaleString('en-US')}</strong>
                   <span className="muted-text">{note.tags.length} tags</span>
                 </div>
                 <p>{note.content}</p>
@@ -77,17 +78,19 @@ export function NotesLibraryPanel() {
                 </div>
                 <div className="library-actions">
                   <button className="text-button" onClick={() => sendNoteToCapture(note.id)}>
-                    复用为草稿
+                    Reuse as Draft
                   </button>
                   <button className="text-button danger-text" onClick={() => deleteNote(note.id)}>
-                    删除
+                    Delete
                   </button>
                 </div>
               </article>
             ))}
           </div>
         ) : (
-          <p className="muted-text">还没有匹配记录，保存一条 Capture 记录后就能检索。</p>
+          <p className="muted-text">
+            No matching notes yet. Save a Capture note and it will appear here.
+          </p>
         )}
       </div>
     </SectionCard>

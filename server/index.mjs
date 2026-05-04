@@ -7,6 +7,7 @@ import {
   getStageLabel,
   inferCaptureSuggestions,
 } from './lib/domain.mjs';
+import { getKnowledgeSearchStatus, searchKnowledgeResources } from './lib/knowledge-search.mjs';
 import { readWorkspace, resetWorkspace, updateWorkspace, writeWorkspace } from './lib/store.mjs';
 
 const port = Number(process.env.PORT ?? 8787);
@@ -38,6 +39,21 @@ async function route(request, response) {
 
   if (method === 'GET' && url.pathname === '/api/health') {
     sendJson(response, 200, { ok: true, service: 'pm-growth-os-api' });
+    return;
+  }
+
+  if (method === 'GET' && url.pathname === '/api/knowledge-search') {
+    sendJson(response, 200, {
+      ok: true,
+      service: 'pm-growth-os-knowledge-search',
+      ...getKnowledgeSearchStatus(),
+    });
+    return;
+  }
+
+  if (method === 'POST' && url.pathname === '/api/knowledge-search') {
+    const body = await readJson(request);
+    sendJson(response, 200, { resources: await searchKnowledgeResources(body) });
     return;
   }
 

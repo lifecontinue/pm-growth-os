@@ -10,10 +10,13 @@ import {
   selectCapabilityApi,
   sendCapabilityToCaptureApi,
   sendCoachStepToCaptureApi,
+  sendLearningResourceToCaptureApi,
   sendNoteToCaptureApi,
+  updateCaptureCapabilityLinksApi,
   updateCaptureDraftApi,
   updateConnectorApi,
   updateReflectionDraftApi,
+  updateUserProfileApi,
 } from '../lib/api-client';
 import { inferCaptureSuggestions } from '../lib/capture-inference';
 import { exportNotesToMarkdown } from '../lib/note-export';
@@ -25,7 +28,7 @@ import {
   userProfile,
   weeklySummary,
 } from '../lib/mock-data';
-import type { ToolConnector, WorkspaceState } from '../types/domain';
+import type { ToolConnector, UserProfile, WorkspaceState } from '../types/domain';
 
 type AppState = WorkspaceState & {
   backendError: string | null;
@@ -43,7 +46,9 @@ type AppState = WorkspaceState & {
   selectCapability: (capabilityId: string) => void;
   sendCapabilityToCapture: (capabilityId: string) => void;
   sendCoachStepToCapture: (stepId: string) => void;
+  sendLearningResourceToCapture: (resourceId: string) => void;
   sendNoteToCapture: (noteId: string) => void;
+  updateCaptureCapabilityLinks: (capabilityIds: string[]) => void;
   updateCaptureDraft: (draft: string) => void;
   updateConnector: (
     connectorId: string,
@@ -55,6 +60,7 @@ type AppState = WorkspaceState & {
     },
   ) => void;
   updateReflectionDraft: (draft: string) => void;
+  updateUserProfile: (patch: Partial<UserProfile>) => void;
 };
 
 const initialState: WorkspaceState = {
@@ -110,7 +116,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     const content = get().captureDraft.trim();
     if (!content) return;
 
-    runWorkspaceAction(set, () => createNoteApi(content));
+    const selectedCapabilityIds = get().captureSuggestions.relatedCapabilities.map((item) => item.id);
+    runWorkspaceAction(set, () => createNoteApi(content, selectedCapabilityIds));
   },
   selectCapability: (capabilityId: string) => {
     set({
@@ -124,8 +131,34 @@ export const useAppStore = create<AppState>((set, get) => ({
   sendCoachStepToCapture: (stepId: string) => {
     runWorkspaceAction(set, () => sendCoachStepToCaptureApi(stepId));
   },
+  sendLearningResourceToCapture: (resourceId: string) => {
+    runWorkspaceAction(set, () => sendLearningResourceToCaptureApi(resourceId));
+  },
   sendNoteToCapture: (noteId: string) => {
     runWorkspaceAction(set, () => sendNoteToCaptureApi(noteId));
+  },
+  updateCaptureCapabilityLinks: (capabilityIds: string[]) => {
+    set((state) => ({
+      captureSuggestions: {
+        ...state.captureSuggestions,
+        relatedCapabilities: state.capabilities
+          .filter((capability) => capabilityIds.includes(capability.id))
+          .map((capability) => {
+            const existing = state.captureSuggestions.relatedCapabilities.find(
+              (item) => item.id === capability.id,
+            );
+
+            return {
+              id: capability.id,
+              name: capability.name,
+              reason: existing?.reason ?? 'Manually linked by the user.',
+            };
+          }),
+        confidence:
+          capabilityIds.length === 0 ? 'low' : capabilityIds.length === 1 ? 'medium' : 'high',
+      },
+    }));
+    runWorkspaceAction(set, () => updateCaptureCapabilityLinksApi(capabilityIds));
   },
   updateCaptureDraft: (draft: string) =>
     set((state) => {
@@ -158,6 +191,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateReflectionDraft: (draft: string) => {
     set({ reflectionDraft: draft });
     runWorkspaceAction(set, () => updateReflectionDraftApi(draft));
+  },
+  updateUserProfile: (patch: Partial<UserProfile>) => {
+    set((state) => ({
+      userProfile: {
+        ...state.userProfile,
+        ...patch,
+      },
+    }));
+    runWorkspaceAction(set, () => updateUserProfileApi(patch));
   },
 }));
 
